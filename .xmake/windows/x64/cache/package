@@ -1,0 +1,64 @@
+{
+    spdlog = {
+        __requirestr = "spdlog 1.13.0",
+        cxxflags = "/utf-8",
+        version = "v1.13.0",
+        sysincludedirs = [[C:\Users\Lenovo\AppData\Local\.xmake\packages\s\spdlog\v1.13.0\f7db3f4ee6c94208a389ab07cefee620\include]],
+        installdir = [[C:\Users\Lenovo\AppData\Local\.xmake\packages\s\spdlog\v1.13.0\f7db3f4ee6c94208a389ab07cefee620]],
+        __enabled = true,
+        license = "MIT",
+        envs = {
+            PATH = {
+                [[C:\Users\Lenovo\AppData\Local\.xmake\packages\s\spdlog\v1.13.0\f7db3f4ee6c94208a389ab07cefee620\bin]]
+            }
+        }
+    },
+    fmt = {
+        __requirestr = "fmt",
+        cxxflags = "/utf-8",
+        __enabled = true,
+        envs = {
+            PATH = {
+                [[C:\Users\Lenovo\AppData\Local\.xmake\packages\c\cmake\3.30.2\2b80cef30074424181b5e19a46ef30fc\bin]]
+            }
+        },
+        sysincludedirs = [[C:\Users\Lenovo\AppData\Local\.xmake\packages\f\fmt\11.1.4\d3052220889d449797174163cbd7ccb1\include]],
+        license = "MIT",
+        links = "fmt",
+        libfiles = [[C:\Users\Lenovo\AppData\Local\.xmake\packages\f\fmt\11.1.4\d3052220889d449797174163cbd7ccb1\lib\fmt.lib]],
+        static = true,
+        installdir = [[C:\Users\Lenovo\AppData\Local\.xmake\packages\f\fmt\11.1.4\d3052220889d449797174163cbd7ccb1]],
+        linkdirs = [[C:\Users\Lenovo\AppData\Local\.xmake\packages\f\fmt\11.1.4\d3052220889d449797174163cbd7ccb1\lib]],
+        version = "11.1.4"
+    },
+    nlohmann_json = {
+        __requirestr = "nlohmann_json",
+        license = "MIT",
+        version = "v3.11.3",
+        sysincludedirs = [[C:\Users\Lenovo\AppData\Local\.xmake\packages\n\nlohmann_json\v3.11.3\826582eb66794908a16a49dbdd33bec4\include]],
+        __enabled = true,
+        installdir = [[C:\Users\Lenovo\AppData\Local\.xmake\packages\n\nlohmann_json\v3.11.3\826582eb66794908a16a49dbdd33bec4]],
+        envs = {
+            PATH = {
+                [[C:\Users\Lenovo\AppData\Local\.xmake\packages\n\nlohmann_json\v3.11.3\826582eb66794908a16a49dbdd33bec4\bin]]
+            }
+        }
+    },
+    eigen = {
+        __requirestr = "eigen",
+        license = "MPL-2.0",
+        version = "3.4.0",
+        sysincludedirs = {
+            [[C:\Users\Lenovo\AppData\Local\.xmake\packages\e\eigen\3.4.0\f561d5e1cd7344ad8190641a792f9a9d\include]],
+            [[C:\Users\Lenovo\AppData\Local\.xmake\packages\e\eigen\3.4.0\f561d5e1cd7344ad8190641a792f9a9d\include\eigen3]]
+        },
+        __enabled = true,
+        installdir = [[C:\Users\Lenovo\AppData\Local\.xmake\packages\e\eigen\3.4.0\f561d5e1cd7344ad8190641a792f9a9d]],
+        envs = {
+            PATH = {
+                [[C:\Users\Lenovo\AppData\Local\.xmake\packages\e\eigen\3.4.0\f561d5e1cd7344ad8190641a792f9a9d\bin]],
+                [[C:\Users\Lenovo\AppData\Local\.xmake\packages\c\cmake\3.30.2\2b80cef30074424181b5e19a46ef30fc\bin]]
+            }
+        }
+    }
+}
