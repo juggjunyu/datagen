@@ -102,7 +102,7 @@ tests/data/sample-queries
 
 build
 
-.xmake
+.xmake/*
 .vs
 .vscode
 vsxmake*
