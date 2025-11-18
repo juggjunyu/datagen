@@ -1,2 +1,19 @@
-.xmake
-build
+# xmake 相关
+.xmake/
+build/
+
+# 编译输出
+*.o
+*.exe
+*.dll
+*.so
+*.a
+*.lib
+
+# 临时文件
+*.tmp
+*.log
+
+# IDE 文件（如果适用）
+.vscode/
+.idea/
