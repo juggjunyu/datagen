@@ -1,8 +1,0 @@
-{
-    packages = {
-        [[C:\Users\Lenovo\AppData\Local\.xmake\packages\e\eigen\3.4.0\f561d5e1cd7344ad8190641a792f9a9d]],
-        [[C:\Users\Lenovo\AppData\Local\.xmake\packages\f\fmt\11.1.4\d3052220889d449797174163cbd7ccb1]],
-        [[C:\Users\Lenovo\AppData\Local\.xmake\packages\n\nlohmann_json\v3.11.3\826582eb66794908a16a49dbdd33bec4]],
-        [[C:\Users\Lenovo\AppData\Local\.xmake\packages\s\spdlog\v1.13.0\f7db3f4ee6c94208a389ab07cefee620]]
-    }
-}
