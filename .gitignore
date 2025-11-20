@@ -17,3 +17,5 @@ build/
 # IDE 文件（如果适用）
 .vscode/
 .idea/
+
+output.txt
