@@ -3,12 +3,15 @@ chcp 65001 > nul
 setlocal enabledelayedexpansion
 
 :: 可自定义参数
-set TARGET_COUNT=600
+set TARGET_COUNT=1000
 set BASE_DIR=E:\research\data\Animation\Face-Face
 
 :: 初始化计数器
-set SUCCESS_COUNT=0
+set SUCCESS_COUNT=600
 set ATTEMPT_COUNT=0
+
+:: 记录开始时间
+for /f "tokens=1-4 delims=:." %%A in ("%time%") do set START_TIME=%%A%%B%%C%%D
 
 echo 开始生成，目标数量: %TARGET_COUNT%
 echo.
@@ -61,6 +64,10 @@ timeout /t 1 /nobreak > nul
 goto loop
 
 :end
-echo Program ended.
+:: 记录结束时间
+for /f "tokens=1-4 delims=:." %%A in ("%time%") do set END_TIME=%%A%%B%%C%%D
 
-endlocal
+:: 计算总计时
+set /a ELAPSED_TIME_MS=%END_TIME% - %START_TIME%
+set /a ELAPSED_TIME_SEC=%ELAPSED_TIME_MS% / 1000
+echo Total time: %ELAPSED_TIME_SEC% seconds

@@ -10,6 +10,9 @@ set BASE_DIR=EFResults
 set SUCCESS_COUNT=0
 set ATTEMPT_COUNT=0
 
+:: 记录开始时间
+for /f "tokens=1-4 delims=:." %%A in ("%time%") do set START_TIME=%%A%%B%%C%%D
+
 echo 开始生成，目标数量: %TARGET_COUNT%
 echo.
 
@@ -22,7 +25,7 @@ set OUTPUT_DIR=%BASE_DIR%_%SUCCESS_COUNT%
 
 echo [%SUCCESS_COUNT%/%TARGET_COUNT%] 尝试生成 #%ATTEMPT_COUNT%, 输出目录: %OUTPUT_DIR%
 
-:: if not exist "%OUTPUT_DIR%" mkdir "%OUTPUT_DIR%"
+if not exist "%OUTPUT_DIR%" mkdir "%OUTPUT_DIR%"
 
 :: 运行生成器并捕获输出
 echo 正在运行generator...
