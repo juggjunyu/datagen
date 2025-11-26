@@ -1,6 +1,7 @@
 # xmake 相关
 .xmake/
 build/
+.vscode/
 
 # 编译输出
 *.o
@@ -20,3 +21,8 @@ build/
 
 output.txt
 output_EF.txt
+*.txt
+
+# 其他
+*.zip
+*.tar.gz
