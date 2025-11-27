@@ -10,7 +10,7 @@ set BASE_DIR=E:\research\data\Animation\Vertex-Face
 @REM Generator will create BASE_DIR\VF_seed + random number
 set OUTPUT_DIR=%BASE_DIR%\VF
 
-set SUCCESS_COUNT=289
+set SUCCESS_COUNT=0
 set ATTEMPT_COUNT=0
 
 @REM :: 记录开始时间（使用PowerShell获取精确时间戳，避免整数溢出和跨天问题）

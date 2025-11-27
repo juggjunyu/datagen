@@ -11,7 +11,7 @@ REM Generator will create BASE_DIR\Edge-Face_seed + random number
 set OUTPUT_DIR=%BASE_DIR%\Edge-Face
 
 REM Initialize counters
-set SUCCESS_COUNT=240
+set SUCCESS_COUNT=537
 set ATTEMPT_COUNT=0
 
 REM Record start time using PowerShell for precise timestamp

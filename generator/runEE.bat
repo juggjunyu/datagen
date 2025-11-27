@@ -11,7 +11,7 @@ set BASE_DIR=E:\research\data\Animation\Edge-Edge
 set OUTPUT_DIR=%BASE_DIR%\Edge-Edge
 
 @REM :: 初始化计数器
-set SUCCESS_COUNT=242
+set SUCCESS_COUNT=11
 set ATTEMPT_COUNT=0
 
 @REM :: 记录开始时间（使用PowerShell获取精确时间戳，避免整数溢出和跨天问题）

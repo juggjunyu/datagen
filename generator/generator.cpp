@@ -506,8 +506,12 @@ CollisionPoint generateEF(unsigned seed)
     auto [vel1, vel2] = edgeface::genColVel(engine, patchNormal1, patch2, uv2);
     std::cout << "vel1: " << vel1.transpose() << std::endl;
     std::cout << "vel2: " << vel2.transpose() << std::endl;
-    patch1.velp = generateVelocityField(engine, vel1, uv1, patch1.ctrlp);
-    patch2.velp = generateVelocityField(engine, vel2, uv2, patch2.ctrlp);
+    // patch1.velp = generateVelocityField(engine, vel1, uv1, patch1.ctrlp);
+    // patch2.velp = generateVelocityField(engine, vel2, uv2, patch2.ctrlp);
+
+    patch1.velp = generateVelocityFieldIndependent(engine, actualNormal1);
+    patch2.velp = generateVelocityFieldIndependent(engine, -actualNormal1);
+
 
     TriParamBound bound1 = generateLocalParamBound(uv1);
     TriParamBound bound2 = edgeface::genLocalParam(uv2);
@@ -523,6 +527,21 @@ CollisionPoint generateEF(unsigned seed)
 
     localPatch1.velp = patch1.divideBezierPatch(bound1, patch1.velp);
     localPatch2.velp = patch2.divideBezierPatch(bound2, patch2.velp);
+
+
+    std::cout << "Local patch1 control points:" << std::endl;
+    for(int i=0; i<6; i++)
+        std::cout<<"local patch1 ctrlp "<<i<<": "<<localPatch1.ctrlp[i].transpose()<<std::endl;
+    std::cout << "Local patch2 control points:" << std::endl;
+    for(int i=0; i<6; i++)
+        std::cout<<"local patch2 ctrlp "<<i<<": "<<localPatch2.ctrlp[i].transpose()<<std::endl;
+
+    std::cout << "Local patch1 velocities:" << std::endl;  
+    for(int i=0; i<6; i++)
+        std::cout<<"local patch1 velp "<<i<<": "<<localPatch1.velp[i].transpose()<<std::endl;
+    std::cout << "Local patch2 velocities:" << std::endl;
+    for(int i=0; i<6; i++)
+        std::cout<<"local patch2 velp "<<i<<": "<<localPatch2.velp[i].transpose()<<std::endl;
 
     CollisionPoint cp = { localPatch1, localPatch2, uv1, uv2, local_uv1, local_uv2, localPatch1.evaluateNormal(local_uv1), localPatch2.evaluateNormal(local_uv2), vel1, vel2};
     
@@ -565,12 +584,22 @@ CollisionPoint generateEE(unsigned seed)
     
     // 生成满足分离条件的速度
     auto [vel1, vel2] = edgeedge::genColVel(engine, patch1, patch2, uv1, uv2);
-    std::cout << "vel1: " << vel1.transpose() << std::endl;
-    std::cout << "vel2: " << vel2.transpose() << std::endl;
+    // std::cout << "vel1: " << vel1.transpose() << std::endl;
+    // std::cout << "vel2: " << vel2.transpose() << std::endl;
     
     // 生成速度场
-    patch1.velp = generateVelocityField(engine, vel1, uv1, patch1.ctrlp);
-    patch2.velp = generateVelocityField(engine, vel2, uv2, patch2.ctrlp);
+    // patch1.velp = generateVelocityField(engine, vel1, uv1, patch1.ctrlp);
+    // patch2.velp = generateVelocityField(engine, vel2, uv2, patch2.ctrlp);
+
+    std::cout << "patch1 normal: " << patch1.evaluateNormal(uv1).transpose() << std::endl;
+    std::cout << "patch2 normal: " << patch2.evaluateNormal(uv2).transpose() << std::endl;
+
+    Vector3r usedNormal = patch1.evaluateNormal(uv1);
+    if(usedNormal == Vector3r(0,0,0))
+        usedNormal = patch2.evaluateNormal(uv2);
+
+    patch1.velp = generateVelocityFieldIndependent(engine, usedNormal);
+    patch2.velp = generateVelocityFieldIndependent(engine, -usedNormal);
 
     // 局部切分（使用统一的边界参数域生成）
     TriParamBound bound1 = edgeface::genLocalParam(uv1);
@@ -599,6 +628,20 @@ CollisionPoint generateEE(unsigned seed)
     // 切分速度场
     localPatch1.velp = patch1.divideBezierPatch(bound1, patch1.velp);
     localPatch2.velp = patch2.divideBezierPatch(bound2, patch2.velp);
+
+    std::cout << "localpatch1 control points:" << std::endl;   
+    for(int i = 0; i < 6; i++)
+        std::cout << localPatch1.ctrlp[i].transpose() << std::endl;
+    std::cout << "localpatch2 control points:" << std::endl;
+    for(int i = 0; i < 6; i++)
+        std::cout << localPatch2.ctrlp[i].transpose() << std::endl;
+    
+    std::cout << "localpatch1 velocities:" << std::endl;
+    for(int i = 0; i < 6; i++)
+        std::cout << localPatch1.velp[i].transpose() << std::endl;
+    std::cout << "localpatch2 velocities:" << std::endl;
+    for(int i = 0; i < 6; i++)
+        std::cout << localPatch2.velp[i].transpose() << std::endl;
 
     // 构建碰撞点结构
     CollisionPoint cp = { 
@@ -646,10 +689,12 @@ CollisionPoint generateVF(unsigned seed)
     
     auto patchNormal1 = patch1.evaluateNormal(uv1);
     auto [vel1, vel2] = vertexface::genColVel(engine, patchNormal1, patch2, uv2);
-    std::cout << "vel1: " << vel1.transpose() << std::endl;
-    std::cout << "vel2: " << vel2.transpose() << std::endl;
-    patch1.velp = generateVelocityField(engine, vel1, uv1, patch1.ctrlp);
-    patch2.velp = generateVelocityField(engine, vel2, uv2, patch2.ctrlp);
+    // std::cout << "vel1: " << vel1.transpose() << std::endl;
+    // std::cout << "vel2: " << vel2.transpose() << std::endl;
+    // patch1.velp = generateVelocityField(engine, vel1, uv1, patch1.ctrlp);
+    // patch2.velp = generateVelocityField(engine, vel2, uv2, patch2.ctrlp);
+    patch1.velp = generateVelocityFieldIndependent(engine, patchNormal1);
+    patch2.velp = generateVelocityFieldIndependent(engine, -patchNormal1);
 
     TriParamBound bound1 = generateLocalParamBound(uv1);
     TriParamBound bound2 = generateLocalParamBound(uv2);
@@ -661,6 +706,20 @@ CollisionPoint generateVF(unsigned seed)
 
     localPatch1.velp = patch1.divideBezierPatch(bound1, patch1.velp);
     localPatch2.velp = patch2.divideBezierPatch(bound2, patch2.velp);
+
+    std::cout << "localpatch1 control points:" << std::endl;   
+    for(int i = 0; i < 6; i++)
+        std::cout << localPatch1.ctrlp[i].transpose() << std::endl;
+    std::cout << "localpatch2 control points:" << std::endl;
+    for(int i = 0; i < 6; i++)
+        std::cout << localPatch2.ctrlp[i].transpose() << std::endl;
+    
+    std::cout << "localpatch1 velocities:" << std::endl;
+    for(int i = 0; i < 6; i++)
+        std::cout << localPatch1.velp[i].transpose() << std::endl;
+    std::cout << "localpatch2 velocities:" << std::endl;
+    for(int i = 0; i < 6; i++)
+        std::cout << localPatch2.velp[i].transpose() << std::endl;
 
     CollisionPoint cp = { localPatch1, localPatch2, uv1, uv2, local_uv1, local_uv2, localPatch1.evaluateNormal(local_uv1), localPatch2.evaluateNormal(local_uv2), vel1, vel2};
     
@@ -691,11 +750,20 @@ CollisionPoint generateVE(unsigned seed)
         patch1.ctrlp[i] = patch1.ctrlp[i] + offset;
     
     auto patchNormal1 = patch1.evaluateNormal(uv1);
+
+    std::cout << "patchNormal1: " << patchNormal1.transpose() << std::endl;
+    Vector3r usedNormal = patchNormal1;
+    if(usedNormal == Vector3r(0,0,0))
+        usedNormal = patch2.evaluateNormal(uv2);
+
     auto [vel1, vel2] = vertexedge::genColVel(engine, patch1, patch2, uv1, uv2);
-    std::cout << "vel1: " << vel1.transpose() << std::endl;
-    std::cout << "vel2: " << vel2.transpose() << std::endl;
-    patch1.velp = generateVelocityField(engine, vel1, uv1, patch1.ctrlp);
-    patch2.velp = generateVelocityField(engine, vel2, uv2, patch2.ctrlp);
+    // std::cout << "vel1: " << vel1.transpose() << std::endl;
+    // std::cout << "vel2: " << vel2.transpose() << std::endl;
+    // patch1.velp = generateVelocityField(engine, vel1, uv1, patch1.ctrlp);
+    // patch2.velp = generateVelocityField(engine, vel2, uv2, patch2.ctrlp);
+
+    patch1.velp = generateVelocityFieldIndependent(engine, usedNormal);
+    patch2.velp = generateVelocityFieldIndependent(engine, -usedNormal);
 
     TriParamBound bound1 = edgeface::genLocalParam(uv1);
     TriParamBound bound2 = generateLocalParamBound(uv2);
@@ -710,6 +778,20 @@ CollisionPoint generateVE(unsigned seed)
 
     localPatch1.velp = patch1.divideBezierPatch(bound1, patch1.velp);
     localPatch2.velp = patch2.divideBezierPatch(bound2, patch2.velp);
+
+    std::cout << "localpatch1 control points:" << std::endl;   
+    for(int i = 0; i < 6; i++)
+        std::cout << localPatch1.ctrlp[i].transpose() << std::endl;
+    std::cout << "localpatch2 control points:" << std::endl;
+    for(int i = 0; i < 6; i++)
+        std::cout << localPatch2.ctrlp[i].transpose() << std::endl;
+    
+    std::cout << "localpatch1 velocities:" << std::endl;
+    for(int i = 0; i < 6; i++)
+        std::cout << localPatch1.velp[i].transpose() << std::endl;
+    std::cout << "localpatch2 velocities:" << std::endl;
+    for(int i = 0; i < 6; i++)
+        std::cout << localPatch2.velp[i].transpose() << std::endl;
 
     CollisionPoint cp = { localPatch1, localPatch2, uv1, uv2, local_uv1, local_uv2, localPatch1.evaluateNormal(local_uv1), localPatch2.evaluateNormal(local_uv2), vel1, vel2};
     
@@ -737,11 +819,19 @@ CollisionPoint generateVV(unsigned seed)
         patch1.ctrlp[i] = patch1.ctrlp[i] + offset;
     
     auto patchNormal1 = patch1.evaluateNormal(uv1);
+    std::cout << "patchNormal1: " << patchNormal1.transpose() << std::endl;
+    Vector3r usedNormal = patchNormal1;
+    if(usedNormal == Vector3r(0,0,0))
+        usedNormal = patch2.evaluateNormal(uv2);
+
     auto [vel1, vel2] = vertexedge::genColVel(engine, patch1, patch2, uv1, uv2);
-    std::cout << "vel1: " << vel1.transpose() << std::endl;
-    std::cout << "vel2: " << vel2.transpose() << std::endl;
-    patch1.velp = generateVelocityField(engine, vel1, uv1, patch1.ctrlp);
-    patch2.velp = generateVelocityField(engine, vel2, uv2, patch2.ctrlp);
+    // std::cout << "vel1: " << vel1.transpose() << std::endl;
+    // std::cout << "vel2: " << vel2.transpose() << std::endl;
+    // patch1.velp = generateVelocityField(engine, vel1, uv1, patch1.ctrlp);
+    // patch2.velp = generateVelocityField(engine, vel2, uv2, patch2.ctrlp);
+
+    patch1.velp = generateVelocityFieldIndependent(engine, usedNormal);
+    patch2.velp = generateVelocityFieldIndependent(engine, -usedNormal);
 
     TriParamBound bound1 = generateLocalParamBound(uv1);
     TriParamBound bound2 = generateLocalParamBound(uv2);
@@ -753,6 +843,20 @@ CollisionPoint generateVV(unsigned seed)
 
     localPatch1.velp = patch1.divideBezierPatch(bound1, patch1.velp);
     localPatch2.velp = patch2.divideBezierPatch(bound2, patch2.velp);
+
+    std::cout << "localpatch1 control points:" << std::endl;   
+    for(int i = 0; i < 6; i++)
+        std::cout << localPatch1.ctrlp[i].transpose() << std::endl;
+    std::cout << "localpatch2 control points:" << std::endl;
+    for(int i = 0; i < 6; i++)
+        std::cout << localPatch2.ctrlp[i].transpose() << std::endl;
+    
+    std::cout << "localpatch1 velocities:" << std::endl;
+    for(int i = 0; i < 6; i++)
+        std::cout << localPatch1.velp[i].transpose() << std::endl;
+    std::cout << "localpatch2 velocities:" << std::endl;
+    for(int i = 0; i < 6; i++)
+        std::cout << localPatch2.velp[i].transpose() << std::endl;
 
     CollisionPoint cp = { localPatch1, localPatch2, uv1, uv2, local_uv1, local_uv2, localPatch1.evaluateNormal(local_uv1), localPatch2.evaluateNormal(local_uv2), vel1, vel2};
     
@@ -2147,8 +2251,10 @@ CollisionPoint generateSeparatedRandomBezierPatches(unsigned seed, int tasktype)
     localPatch1.velp = patch1.divideBezierPatch(bound1, patch1.velp);
     localPatch2.velp = patch2.divideBezierPatch(bound2, patch2.velp);
 
+    std::cout << "Generated velocity field for local patch1" << std::endl;
     for (int i=0; i<6; i++)
         std::cout << localPatch1.velp[i][0] << " " << localPatch1.velp[i][1] << " " << localPatch1.velp[i][2] << std::endl;
+    std::cout << "Generated velocity field for local patch2" << std::endl;
     for (int i=0; i<6; i++)
         std::cout << localPatch2.velp[i][0] << " " << localPatch2.velp[i][1] << " " << localPatch2.velp[i][2] << std::endl;
 
@@ -2156,17 +2262,17 @@ CollisionPoint generateSeparatedRandomBezierPatches(unsigned seed, int tasktype)
     // cp = { patch1, patch2, uv1, uv2, local_uv1, local_uv2, patch1Normal, patch2Normal, vel1, vel2};
     // return cp;
 
-    std::cout << "Generated velocity field for patch1" << std::endl;
-    std::cout << "Velocity at collision point: " << actual_vel1.transpose() << std::endl;
+    // std::cout << "Generated velocity field for patch1" << std::endl;
+    std::cout << "Velocity1 at collision point: " << actual_vel1.transpose() << std::endl;
     std::cout << "Dot with normal: " << actual_vel1.dot(patch1Normal) << std::endl;
-    for (int i=0; i<6; i++)
-        std::cout << patch1.velp[i][0] << " " << patch1.velp[i][1] << " " << patch1.velp[i][2] << std::endl;
+    // for (int i=0; i<6; i++)
+    //     std::cout << patch1.velp[i][0] << " " << patch1.velp[i][1] << " " << patch1.velp[i][2] << std::endl;
 
-    std::cout << "Generated velocity field for patch2" << std::endl;
-    std::cout << "Velocity at collision point: " << actual_vel2.transpose() << std::endl;
+    // std::cout << "Generated velocity field for patch2" << std::endl;
+    std::cout << "Velocity2 at collision point: " << actual_vel2.transpose() << std::endl;
     std::cout << "Dot with normal: " << actual_vel2.dot(patch2Normal) << std::endl;
-    for (int i=0; i<6; i++)
-        std::cout << patch2.velp[i][0] << " " << patch2.velp[i][1] << " " << patch2.velp[i][2] << std::endl;
+    // for (int i=0; i<6; i++)
+        // std::cout << patch2.velp[i][0] << " " << patch2.velp[i][1] << " " << patch2.velp[i][2] << std::endl;
 
 
 
@@ -2376,10 +2482,10 @@ namespace genStandardData
         {
             for (int i = 0; i < 6; i++)
             {
-                startPos1[i] = startPos1[i] + cp.patch1.velp[i] * Rational("1/100000000");
-                startPos2[i] = startPos2[i] + cp.patch2.velp[i] * Rational("1/100000000");
-                endPos1[i] = endPos1[i] + cp.patch1.velp[i] * Rational("1/100000000");
-                endPos2[i] = endPos2[i] + cp.patch2.velp[i] * Rational("1/100000000");
+                startPos1[i] = startPos1[i] + cp.patch1.velp[i] * Rational("1/131072");
+                startPos2[i] = startPos2[i] + cp.patch2.velp[i] * Rational("1/131072");
+                endPos1[i] = endPos1[i] + cp.patch1.velp[i] * Rational("1/131072");
+                endPos2[i] = endPos2[i] + cp.patch2.velp[i] * Rational("1/131072");
             }
         }
 

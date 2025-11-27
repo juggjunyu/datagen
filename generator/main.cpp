@@ -19,7 +19,7 @@
 inline std::unique_ptr<ArgsParser> BuildArgsParser()
 {
 	auto parser = std::make_unique<ArgsParser>();
-    parser->addArgument<int>("generate", 'g', "generate or test", true);//1:生成，0:测试
+    parser->addArgument<int>("generate", 'g', "work mode: 0=test, 1=generate single case, 2=batch process folders", 1);
     parser->addArgument<std::string>("output", 'o', "output dir", "Animation");
     parser->addArgument<std::string>("input", 'i', "test input file", "tests");
     parser->addArgument<int>("type", 't', "type of generator", 0);
@@ -72,16 +72,16 @@ void generateAnimationSequence(
             patch2.ctrlp[i] = patch2.ctrlp[i] + patch2.velp[i] * t;
         }
         
-        if(t - deltaTime <= timeStart)
-        {
-            //输出ctrlp
-            std::cout<<"patch1:"<< std::endl;
-            for(int i = 0; i < 6; i++)
-                std::cout << patch1.ctrlp[i][0] << " " << patch1.ctrlp[i][1] << " " << patch1.ctrlp[i][2] << std::endl;
-            std::cout << "patch2:" << std::endl;
-            for(int i = 0; i < 6; i++)
-                std::cout << patch2.ctrlp[i][0] << " " << patch2.ctrlp[i][1] << " " << patch2.ctrlp[i][2] << std::endl;
-        }
+        // if(t - deltaTime <= timeStart)
+        // {
+        //     //输出ctrlp
+        //     std::cout<<"patch1:"<< std::endl;
+        //     for(int i = 0; i < 6; i++)
+        //         std::cout << patch1.ctrlp[i][0] << " " << patch1.ctrlp[i][1] << " " << patch1.ctrlp[i][2] << std::endl;
+        //     std::cout << "patch2:" << std::endl;
+        //     for(int i = 0; i < 6; i++)
+        //         std::cout << patch2.ctrlp[i][0] << " " << patch2.ctrlp[i][1] << " " << patch2.ctrlp[i][2] << std::endl;
+        // }
 
         // 写入当前帧
         mesh.patches[0] = patch1;
@@ -113,7 +113,20 @@ int main(int argc, char *argv[])
 
     unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
     // seed = 3366774727;
+    // seed = 1916078341;
     std::cout << "seed: " << seed << std::endl;
+
+    // 批处理模式：扫描文件夹并生成CSV
+    if (workType == 2) {
+        std::cout << "=== Batch Processing Mode ===" << std::endl;
+        std::cout << "Input directory: " << inputDir << std::endl;
+        std::cout << "Task type: " << taskType << std::endl;
+        
+        genStandardData::batchProcessFolders(inputDir, taskType);
+        
+        std::cout << "Batch processing completed!" << std::endl;
+        return 0;
+    }
     // std::mt19937_64 engine(seed);
     // std::uniform_real_distribution<float> dist1(0, 1), dist(-1, 1);
     // int ans=0;

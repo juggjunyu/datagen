@@ -3,6 +3,8 @@
 build/
 .vscode/
 
+.vscode/settings.json
+
 # 编译输出
 *.o
 *.exe
@@ -26,3 +28,4 @@ output_EF.txt
 # 其他
 *.zip
 *.tar.gz
+plan.md

@@ -118,6 +118,14 @@ std::array<Vector3r, 6> generateVelocityFieldIndependent(
     std::mt19937_64& engine,
     const Vector3r& normal);
 
+// 为Edge-Edge碰撞生成速度场，确保满足(v1-v2)·(n1+n2) > 0的条件
+std::pair<std::array<Vector3r, 6>, std::array<Vector3r, 6>> generateVelocityFieldEdgeEdge(
+    std::mt19937_64& engine,
+    const TriQuadBezier& patch1,
+    const TriQuadBezier& patch2,
+    const Array2r& uv1,
+    const Array2r& uv2);
+
 Array2r computeLocalUV(const BaryCoord& originalCoord, const TriParamBound& bound);
 
 TriParamBound generateLocalParamBound(const Array2r& uv, Rational radius = 0.1);

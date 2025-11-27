@@ -34,7 +34,10 @@ std::array<Vector3r, 6> generateVelocityFieldIndependent(
 {
     std::uniform_real_distribution<float> dist(-10.0, 10.0);  // 速度分量范围
     std::array<Vector3r, 6> velocities;
-    
+    Vector3r standardNormal = normal;
+
+    if(normal == Vector3r(0,0,0))
+        standardNormal = Vector3r(0,0,1);
     std::cout << "velocity: " << std::endl;
     // 为每个控制点独立生成速度
     for(int i = 0; i < 6; i++) {
@@ -49,13 +52,92 @@ std::array<Vector3r, 6> generateVelocityFieldIndependent(
                 Rational(dist(engine))
             );
             
-        } while (velocity.dot(normal) <= Rational(0));  // 确保在半空间内
+        } while (velocity.dot(standardNormal) <= Rational(0));  // 确保在半空间内
         
         velocities[i] = velocity;
         // std::cout << velocity << std::endl;
     }
     
     return velocities;
+}
+
+
+// 为Edge-Edge碰撞生成速度场，确保满足(v1-v2)·(n1+n2) > 0的条件
+std::pair<std::array<Vector3r, 6>, std::array<Vector3r, 6>> generateVelocityFieldEdgeEdge(
+    std::mt19937_64& engine,
+    const TriQuadBezier& patch1,
+    const TriQuadBezier& patch2,
+    const Array2r& uv1,
+    const Array2r& uv2)
+{
+    std::uniform_real_distribution<float> dist(-10.0, 10.0);  // 速度分量范围
+    
+    // 计算两个patch在碰撞点的法线
+    Vector3r normal1 = patch1.evaluateNormal(uv1);
+    Vector3r normal2 = patch2.evaluateNormal(uv2);
+    Vector3r normalSum = normal1 + normal2;
+    
+    std::array<Vector3r, 6> velocities1;
+    std::array<Vector3r, 6> velocities2;
+    
+    std::cout << "Generating Edge-Edge velocity field..." << std::endl;
+    std::cout << "Normal1: " << normal1.transpose() << std::endl;
+    std::cout << "Normal2: " << normal2.transpose() << std::endl;
+    std::cout << "Normal sum: " << normalSum.transpose() << std::endl;
+    
+    // 为patch1的每个控制点生成速度
+    for(int i = 0; i < 6; i++) {
+        Vector3r velocity1;
+        
+        // 生成patch1的速度，倾向于在normalSum方向
+        do {
+            velocity1 = Vector3r(
+                Rational(dist(engine)),
+                Rational(dist(engine)),
+                Rational(dist(engine))
+            );
+        } while (velocity1.dot(normalSum) <= Rational(0));  // 确保在normalSum半空间内
+        
+        velocities1[i] = velocity1;
+    }
+    
+    // 为patch2的每个控制点生成速度
+    for(int i = 0; i < 6; i++) {
+        Vector3r velocity2;
+        
+        // 生成patch2的速度，倾向于在-normalSum方向
+        do {
+            velocity2 = Vector3r(
+                Rational(dist(engine)),
+                Rational(dist(engine)),
+                Rational(dist(engine))
+            );
+        } while (velocity2.dot(-normalSum) <= Rational(0));  // 确保在-normalSum半空间内
+        
+        velocities2[i] = velocity2;
+    }
+    
+    // 验证相对速度条件
+    // 使用控制点的平均速度来近似验证
+    Vector3r avgVel1 = Vector3r::Zero();
+    Vector3r avgVel2 = Vector3r::Zero();
+    for(int i = 0; i < 6; i++) {
+        avgVel1 += velocities1[i];
+        avgVel2 += velocities2[i];
+    }
+    avgVel1 /= Rational(6);
+    avgVel2 /= Rational(6);
+    
+    Rational dotProduct = (avgVel1 - avgVel2).dot(normalSum);
+    std::cout << "Average relative velocity dot normal sum: " << dotProduct << std::endl;
+    
+    if (dotProduct <= Rational(0)) {
+        std::cout << "Warning: Average relative velocity condition not satisfied, swapping velocities..." << std::endl;
+        // 如果平均速度不满足条件，交换两组速度
+        std::swap(velocities1, velocities2);
+    }
+    
+    return {velocities1, velocities2};
 }
 
 
