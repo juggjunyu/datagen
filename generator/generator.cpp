@@ -206,33 +206,36 @@ Vector3r generateVelocityPerpendicularToNormal(
     const Vector3r& partialU,
     const Vector3r& partialV)
 {
-    std::uniform_real_distribution<float> speedDist(0.5, 5.0);
+    std::uniform_real_distribution<float> speedDist(-10.0, 10.0);
     std::uniform_real_distribution<float> coeffDist(-1.0, 1.0);
     
     // 生成两个随机系数来线性组合partialU和partialV
-    Rational coeff_u = Rational(coeffDist(engine));
-    Rational coeff_v = Rational(coeffDist(engine));
+    Rational coeff_u = Rational(speedDist(engine));
+    Rational coeff_v = Rational(speedDist(engine));
     
     // 在切平面内生成速度方向
     Vector3r direction = coeff_u * partialU + coeff_v * partialV;
-    
+    double log2dir = std::log2((double)direction.norm());
+    int n = static_cast<int>(std::round(log2dir));
+    // direction = direction / Rational(1 << n);
+
     // 归一化方向
-    Rational dir_norm = direction.norm();
-    if (dir_norm > Rational(0)) {
-        direction = direction / dir_norm;
-    } else {
-        // 如果方向为零，只使用partialU
-        direction = partialU;
-        dir_norm = direction.norm();
-        if (dir_norm > Rational(0)) {
-            direction = direction / dir_norm;
-        }
-    }
+    // Rational dir_norm = direction.norm();
+    // if (dir_norm > Rational(0)) {
+    //     direction = direction / dir_norm;
+    // } else {
+    //     // 如果方向为零，只使用partialU
+    //     direction = partialU;
+    //     dir_norm = direction.norm();
+    //     if (dir_norm > Rational(0)) {
+    //         direction = direction / dir_norm;
+    //     }
+    // }
     
     // 生成速度大小
-    Rational speed = Rational(speedDist(engine));
+    // Rational speed = Rational(speedDist(engine));
     
-    return speed * direction;
+    return direction;
 }
 
 std::array<Vector3r, 6> generateVelocityField(
@@ -543,7 +546,7 @@ CollisionPoint generateEF(unsigned seed)
     for(int i=0; i<6; i++)
         std::cout<<"local patch2 velp "<<i<<": "<<localPatch2.velp[i].transpose()<<std::endl;
 
-    CollisionPoint cp = { localPatch1, localPatch2, uv1, uv2, local_uv1, local_uv2, localPatch1.evaluateNormal(local_uv1), localPatch2.evaluateNormal(local_uv2), vel1, vel2};
+    CollisionPoint cp = { localPatch1, localPatch2, uv1, uv2, local_uv1, local_uv2, targetNormal, localPatch2.evaluateNormal(local_uv2), vel1, vel2};
     
     std::cout << "collision point1: " << localPatch1.evaluatePatchPoint(local_uv1).transpose() << std::endl;
     std::cout << "collision point2: " << localPatch2.evaluatePatchPoint(local_uv2).transpose() << std::endl;
@@ -721,7 +724,7 @@ CollisionPoint generateVF(unsigned seed)
     for(int i = 0; i < 6; i++)
         std::cout << localPatch2.velp[i].transpose() << std::endl;
 
-    CollisionPoint cp = { localPatch1, localPatch2, uv1, uv2, local_uv1, local_uv2, localPatch1.evaluateNormal(local_uv1), localPatch2.evaluateNormal(local_uv2), vel1, vel2};
+    CollisionPoint cp = { localPatch1, localPatch2, uv1, uv2, local_uv1, local_uv2, patchNormal1, localPatch2.evaluateNormal(local_uv2), vel1, vel2};
     
     std::cout << "collision point1: " << localPatch1.evaluatePatchPoint(local_uv1).transpose() << std::endl;
     std::cout << "collision point2: " << localPatch2.evaluatePatchPoint(local_uv2).transpose() << std::endl;
@@ -899,21 +902,21 @@ CollisionPoint generateNearMissFF(unsigned seed, Rational gap)
     std::cout << "uv2: " << uv2.transpose() << std::endl;
     
     // ========== 2. 计算法线和偏导数 ==========
-    Vector3r patch1Normal = patch1.evaluateNormal(uv1);
-    Vector3r patch2Normal = patch2.evaluateNormal(uv2);
+    Vector3r patch1Normal = standardFF.normal1;
+    Vector3r patch2Normal = standardFF.normal2;
     
     Vector3r partialU1 = patch1.evaluatePartialU(uv1);
     Vector3r partialV1 = patch1.evaluatePartialV(uv1);
     Vector3r partialU2 = patch2.evaluatePartialU(uv2);
     Vector3r partialV2 = patch2.evaluatePartialV(uv2);
     
-    std::cout << "\n=== Normals and Partial Derivatives ===" << std::endl;
-    std::cout << "patch1 normal: " << patch1Normal.transpose() << std::endl;
-    std::cout << "patch1 partialU: " << partialU1.transpose() << std::endl;
-    std::cout << "patch1 partialV: " << partialV1.transpose() << std::endl;
-    std::cout << "patch2 normal: " << patch2Normal.transpose() << std::endl;
-    std::cout << "patch2 partialU: " << partialU2.transpose() << std::endl;
-    std::cout << "patch2 partialV: " << partialV2.transpose() << std::endl;
+    // std::cout << "\n=== Normals and Partial Derivatives ===" << std::endl;
+    // std::cout << "patch1 normal: " << patch1Normal.transpose() << std::endl;
+    // std::cout << "patch1 partialU: " << partialU1.transpose() << std::endl;
+    // std::cout << "patch1 partialV: " << partialV1.transpose() << std::endl;
+    // std::cout << "patch2 normal: " << patch2Normal.transpose() << std::endl;
+    // std::cout << "patch2 partialU: " << partialU2.transpose() << std::endl;
+    // std::cout << "patch2 partialV: " << partialV2.transpose() << std::endl;
     
     // ========== 3. 通过采样确定分离方向，然后沿法线拉开 ==========
     Vector3r collisionPoint1 = patch1.evaluatePatchPoint(uv1);
@@ -952,7 +955,16 @@ CollisionPoint generateNearMissFF(unsigned seed, Rational gap)
         std::cout << "Normal direction is correct for separation" << std::endl;
     }
 
-    Vector3r separationOffset = gap * normalizedNormal1 * Rational(512);
+    double normNormal = (double)normalizedNormal1.norm();
+    double log2norm = std::log2(normNormal);
+    int n = static_cast<int>(std::round(log2norm));
+    Rational scale = Rational(1) / Rational(1 << n);
+    std::cout << "n: " << n << ", scale: " << scale << std::endl;
+    std::cout << "Normal * scale: " << (normalizedNormal1 * scale).transpose() << std::endl;      
+
+    // Vector3r separationOffset = gap * normalizedNormal1 * Rational(512);
+    Vector3r separationOffset = gap * normalizedNormal1 * scale;
+    
 
     std::cout << "\n=== Applying Separation ===" << std::endl;
     std::cout << "Gap distance: " << (double)gap << std::endl;
@@ -969,36 +981,63 @@ CollisionPoint generateNearMissFF(unsigned seed, Rational gap)
     collisionPoint2 = patch2.evaluatePatchPoint(uv2);
     Rational actualGap = (collisionPoint1 - collisionPoint2).norm();
     
-    std::cout << "\nAfter separation:" << std::endl;
-    std::cout << "Point1: " << collisionPoint1.transpose() << std::endl;
-    std::cout << "Point2: " << collisionPoint2.transpose() << std::endl;
-    std::cout << "Actual gap: " << (double)actualGap << std::endl;
-    std::cout << "Gap error: " << (double)(actualGap - gap) << std::endl;
+    // std::cout << "\nAfter separation:" << std::endl;
+    // std::cout << "Point1: " << collisionPoint1.transpose() << std::endl;
+    // std::cout << "Point2: " << collisionPoint2.transpose() << std::endl;
+    // std::cout << "Actual gap: " << (double)actualGap << std::endl;
+    // std::cout << "Gap error: " << (double)(actualGap - gap) << std::endl;
     
     // ========== 4. 生成垂直于法线的速度（擦肩而过） ==========
     // 使用partialU和partialV的线性组合，它们天然在切平面内
     Vector3r vel1 = generateVelocityPerpendicularToNormal(engine, partialU1, partialV1);
     Vector3r vel2 = generateVelocityPerpendicularToNormal(engine, partialU2, partialV2);
     
-    std::cout << "\n=== Velocity Information ===" << std::endl;
-    std::cout << "vel1: " << vel1.transpose() << std::endl;
-    std::cout << "vel2: " << vel2.transpose() << std::endl;
-    std::cout << "vel1 · normal1: " << (double)vel1.dot(patch1Normal) << " (should be ~0)" << std::endl;
-    std::cout << "vel2 · normal2: " << (double)vel2.dot(patch2Normal) << " (should be ~0)" << std::endl;
+    // std::cout << "\n=== Velocity Information ===" << std::endl;
+    // std::cout << "vel1: " << vel1.transpose() << std::endl;
+    // std::cout << "vel2: " << vel2.transpose() << std::endl;
+    // std::cout << "vel1 · normal1: " << (double)vel1.dot(patch1Normal) << " (should be ~0)" << std::endl;
+    // std::cout << "vel2 · normal2: " << (double)vel2.dot(patch2Normal) << " (should be ~0)" << std::endl;
     
-    Vector3r relativeVel = vel1 - vel2;
-    std::cout << "Relative velocity: " << relativeVel.transpose() << std::endl;
-    std::cout << "Relative speed: " << (double)relativeVel.norm() << std::endl;
-    std::cout << "Relative vel · normal1: " << (double)relativeVel.dot(patch1Normal) 
-              << " (should be ~0 for near-miss)" << std::endl;
+    // Vector3r relativeVel = vel1 - vel2;
+    // std::cout << "Relative velocity: " << relativeVel.transpose() << std::endl;
+    // std::cout << "Relative speed: " << (double)relativeVel.norm() << std::endl;
+    // std::cout << "Relative vel · normal1: " << (double)relativeVel.dot(patch1Normal) 
+    //           << " (should be ~0 for near-miss)" << std::endl;
   
-              
+
 
     // ========== 5. 生成速度场 ==========
     for(int i=0; i<6; i++)
         patch1.velp[i] = vel1;
     for(int i=0; i<6; i++)
         patch2.velp[i] = vel2;
+    
+    // std::cout << "patch1 ctrlp: " << std::endl;
+    // for(int i=0; i<6; i++)
+    //     std::cout << patch1.ctrlp[i].transpose() << std::endl;
+    // std::cout << "patch2 ctrlp: " << std::endl;
+    // for(int i=0; i<6; i++)
+    //     std::cout << patch2.ctrlp[i].transpose() << std::endl;
+    
+    // std::cout << "patch1 velp: " << std::endl;
+    // for(int i=0; i<6; i++)
+    //     std::cout << patch1.velp[i].transpose() << std::endl;
+    // std::cout << "patch2 velp: " << std::endl;
+    // for(int i=0; i<6; i++)
+    //     std::cout << patch2.velp[i].transpose() << std::endl;
+
+    // 适应batchProcess folder的设定，2个patch沿速度反向运动1/2s
+    for(int i=0; i<6; i++) {
+        patch1.ctrlp[i] = patch1.ctrlp[i] + patch1.velp[i] * Rational("-1/2");
+        patch2.ctrlp[i] = patch2.ctrlp[i] + patch2.velp[i] * Rational("-1/2");
+    }
+
+    // std::cout << "patch1 ctrlp after setting: " << std::endl;
+    // for(int i=0; i<6; i++)
+    //     std::cout << patch1.ctrlp[i].transpose() << std::endl;
+    // std::cout << "patch2 ctrlp after setting: " << std::endl;
+    // for(int i=0; i<6; i++)
+    //     std::cout << patch2.ctrlp[i].transpose() << std::endl;
     
     // patch1.velp = generateVelocityField(engine, vel1, uv1, patch1.ctrlp);
     // patch2.velp = generateVelocityField(engine, vel2, uv2, patch2.ctrlp);
@@ -1094,30 +1133,30 @@ CollisionPoint generateNearMissEF(unsigned seed, Rational gap)
     std::cout << "uv2 (edge): " << uv2.transpose() << std::endl;
     
     // ========== 2. 计算面片法线和边的切向量 ==========
-    Vector3r faceNormal = patch1.evaluateNormal(uv1);
+    Vector3r faceNormal = standardEF.normal1;
     Vector3r edgeTangent = computeBoundaryTangent(patch2, uv2);
     
     // 计算面片在碰撞点的偏导数
     Vector3r partialU1 = patch1.evaluatePartialU(uv1);
     Vector3r partialV1 = patch1.evaluatePartialV(uv1);
     
-    std::cout << "\n=== Geometry Information ===" << std::endl;
-    std::cout << "Face normal: " << faceNormal.transpose() << std::endl;
-    std::cout << "Edge tangent: " << edgeTangent.transpose() << std::endl;
-    std::cout << "Face partialU: " << partialU1.transpose() << std::endl;
-    std::cout << "Face partialV: " << partialV1.transpose() << std::endl;
-    std::cout << "Tangent · Normal: " << (double)edgeTangent.dot(faceNormal) 
-              << " (should be ~0)" << std::endl;
+    // std::cout << "\n=== Geometry Information ===" << std::endl;
+    // std::cout << "Face normal: " << faceNormal.transpose() << std::endl;
+    // std::cout << "Edge tangent: " << edgeTangent.transpose() << std::endl;
+    // std::cout << "Face partialU: " << partialU1.transpose() << std::endl;
+    // std::cout << "Face partialV: " << partialV1.transpose() << std::endl;
+    // std::cout << "Tangent · Normal: " << (double)edgeTangent.dot(faceNormal) 
+    //           << " (should be ~0)" << std::endl;
     
-    // ========== 3. 验证初始接触状态 ==========
+    // ========== 3. 验证初始接触状态 ==========    
     Vector3r collisionPoint1 = patch1.evaluatePatchPoint(uv1);
     Vector3r collisionPoint2 = patch2.evaluatePatchPoint(uv2);
     Rational initialDistance = (collisionPoint1 - collisionPoint2).norm();
     
-    std::cout << "\nInitial collision state:" << std::endl;
-    std::cout << "Face point: " << collisionPoint1.transpose() << std::endl;
-    std::cout << "Edge point: " << collisionPoint2.transpose() << std::endl;
-    std::cout << "Initial distance: " << (double)initialDistance << std::endl;
+    // std::cout << "\nInitial collision state:" << std::endl;
+    // std::cout << "Face point: " << collisionPoint1.transpose() << std::endl;
+    // std::cout << "Edge point: " << collisionPoint2.transpose() << std::endl;
+    // std::cout << "Initial distance: " << (double)initialDistance << std::endl;
     
     if (initialDistance > Rational("1/100")) {
         std::cerr << "Standard EF generation failed: initial distance too large (" 
@@ -1139,8 +1178,13 @@ CollisionPoint generateNearMissEF(unsigned seed, Rational gap)
     std::cout << "Separation direction (face normal, not normalized): " << faceNormal.transpose() << std::endl;
     std::cout << "Face normal magnitude: " << (double)faceNormal.norm() << std::endl;
     
+    double normNormal = (double)faceNormal.norm();
+    double log2norm = std::log2(normNormal);
+    int n = static_cast<int>(std::round(log2norm));
+    Rational scale = Rational(1) / Rational(1 << n);
+
     // 计算分离偏移量（沿面法线方向，不归一化）
-    Vector3r separationOffset = gap * faceNormal;
+    Vector3r separationOffset = gap * faceNormal * scale;
     std::cout << "Separation offset: " << separationOffset.transpose() << std::endl;
     std::cout << "Separation offset magnitude: " << (double)separationOffset.norm() << std::endl;
     
@@ -1163,6 +1207,7 @@ CollisionPoint generateNearMissEF(unsigned seed, Rational gap)
     // ========== 6. 生成擦肩而过的速度 ==========
     // 面片速度：在切平面内（垂直于法线）
     Vector3r vel1 = generateVelocityPerpendicularToNormal(engine, partialU1, partialV1);
+    // Vector3r vel2 = generateVelocityPerpendicularToNormal(engine, partialU2, partialV2);
     
     // 边的速度：沿边的切向量方向（平行于边，不归一化）
     // 使用随机系数控制速度大小和方向
@@ -1177,21 +1222,21 @@ CollisionPoint generateNearMissEF(unsigned seed, Rational gap)
     // 直接使用切向量乘以系数，不归一化
     Vector3r vel2 = edgeSpeedCoef * edgeTangent;
     
-    std::cout << "\n=== Velocity Information ===" << std::endl;
-    std::cout << "Face velocity: " << vel1.transpose() << std::endl;
-    std::cout << "Face velocity magnitude: " << (double)vel1.norm() << std::endl;
-    std::cout << "Edge tangent: " << edgeTangent.transpose() << std::endl;
-    std::cout << "Edge tangent magnitude: " << (double)edgeTangent.norm() << std::endl;
-    std::cout << "Edge speed coefficient: " << (double)edgeSpeedCoef << std::endl;
-    std::cout << "Edge velocity: " << vel2.transpose() << std::endl;
-    std::cout << "Edge velocity magnitude: " << (double)vel2.norm() << std::endl;
-    std::cout << "Face vel · normal: " << (double)vel1.dot(faceNormal) 
-              << " (should be ~0)" << std::endl;
-    std::cout << "Edge vel · tangent / ||tangent||^2: " 
-              << (double)(vel2.dot(edgeTangent) / edgeTangent.dot(edgeTangent))
-              << " (should be coefficient)" << std::endl;
-    std::cout << "Edge vel · normal: " << (double)vel2.dot(faceNormal) 
-              << " (parallel to edge means perpendicular to normal)" << std::endl;
+    // std::cout << "\n=== Velocity Information ===" << std::endl;
+    // std::cout << "Face velocity: " << vel1.transpose() << std::endl;
+    // std::cout << "Face velocity magnitude: " << (double)vel1.norm() << std::endl;
+    // std::cout << "Edge tangent: " << edgeTangent.transpose() << std::endl;
+    // std::cout << "Edge tangent magnitude: " << (double)edgeTangent.norm() << std::endl;
+    // std::cout << "Edge speed coefficient: " << (double)edgeSpeedCoef << std::endl;
+    // std::cout << "Edge velocity: " << vel2.transpose() << std::endl;
+    // std::cout << "Edge velocity magnitude: " << (double)vel2.norm() << std::endl;
+    // std::cout << "Face vel · normal: " << (double)vel1.dot(faceNormal) 
+    //           << " (should be ~0)" << std::endl;
+    // std::cout << "Edge vel · tangent / ||tangent||^2: " 
+    //           << (double)(vel2.dot(edgeTangent) / edgeTangent.dot(edgeTangent))
+    //           << " (should be coefficient)" << std::endl;
+    // std::cout << "Edge vel · normal: " << (double)vel2.dot(faceNormal) 
+    //           << " (parallel to edge means perpendicular to normal)" << std::endl;
     
     Vector3r relativeVel = vel1 - vel2;
     std::cout << "Relative velocity: " << relativeVel.transpose() << std::endl;
@@ -1204,7 +1249,27 @@ CollisionPoint generateNearMissEF(unsigned seed, Rational gap)
         patch1.velp[i] = vel1;
         patch2.velp[i] = vel2;
     }
+
+    // std::cout << "patch1 ctrlp: " << std::endl;
+    // for(int i=0; i<6; i++)
+    //     std::cout << patch1.ctrlp[i].transpose() << std::endl;
+    // std::cout << "patch2 ctrlp: " << std::endl;
+    // for(int i=0; i<6; i++)
+    //     std::cout << patch2.ctrlp[i].transpose() << std::endl; 
     
+    // 适应batchProcess folder的设定，2个patch沿速度反向运动1/2s
+    for(int i=0; i<6; i++) {
+        patch1.ctrlp[i] = patch1.ctrlp[i] - vel1 * Rational(1)/Rational(2);
+        patch2.ctrlp[i] = patch2.ctrlp[i] - vel2 * Rational(1)/Rational(2);
+    }
+
+    // std::cout << "patch1 ctrlp after setting: " << std::endl;
+    // for(int i=0; i<6; i++)
+    //     std::cout << patch1.ctrlp[i].transpose() << std::endl;
+    // std::cout << "patch2 ctrlp after setting: " << std::endl;
+    // for(int i=0; i<6; i++)
+    //     std::cout << patch2.ctrlp[i].transpose() << std::endl;
+
     // ========== 8. 局部切分 ==========
     TriParamBound bound1 = generateLocalParamBound(uv1);
     TriParamBound bound2 = edgeface::genLocalParam(uv2);
@@ -1330,14 +1395,25 @@ CollisionPoint generateNearMissEE(unsigned seed, Rational gap)
         std::cerr << "Error: common normal is zero (edges are parallel)!" << std::endl;
         return CollisionPoint();
     }
+
+    Vector3f tmpNormal = commonNormal.cast<float>();
+
+    double normNormal = (double)commonNormal.norm();
+    double log2val = std::log2(normNormal);
+    int n = static_cast<int>(std::round(log2val));
+    Rational scale = Rational(1) / Rational(1 << n);
     
     std::cout << "\n=== Applying Separation ===" << std::endl;
+    std::cout << "float normal: " << tmpNormal.transpose() << std::endl;
     std::cout << "Gap parameter: " << (double)gap << std::endl;
+    std::cout << "Scale for common normal: " << scale << std::endl;
     std::cout << "Separation direction (common normal, not normalized): " << commonNormal.transpose() << std::endl;
     std::cout << "Common normal magnitude: " << (double)commonNormal.norm() << std::endl;
     
+    commonNormal = tmpNormal.cast<Rational>();
+
     // 计算分离偏移量（沿公共法线方向，不归一化）
-    Vector3r separationOffset = gap * commonNormal;
+    Vector3r separationOffset = gap * commonNormal * scale;
     std::cout << "Separation offset: " << separationOffset.transpose() << std::endl;
     std::cout << "Separation offset magnitude: " << (double)separationOffset.norm() << std::endl;
     
@@ -1361,7 +1437,7 @@ CollisionPoint generateNearMissEE(unsigned seed, Rational gap)
     // 两条边的速度都沿着各自的切向量方向（沿边滑动）
     // 使用随机系数控制速度大小和方向
     
-    std::uniform_real_distribution<float> coefDist(-5.0, 5.0);
+    std::uniform_real_distribution<float> coefDist(-5.0, 7.0);
     
     // 第一条边的速度
     Rational edge1SpeedCoef = Rational(coefDist(engine));
@@ -1402,28 +1478,48 @@ CollisionPoint generateNearMissEE(unsigned seed, Rational gap)
     std::cout << "Relative speed: " << (double)relativeVel.norm() << std::endl;
     std::cout << "Relative vel · commonNormal: " << (double)relativeVel.dot(commonNormal) 
               << " (should be ~0, near-miss characteristic)" << std::endl;
-    
+
     // ========== 7. 设置速度场 ==========
     for(int i = 0; i < 6; i++) {
         patch1.velp[i] = vel1;
         patch2.velp[i] = vel2;
     }
     
+    // 适应batchProcess folder的设定，2个patch沿速度反向运动1/2s
+    for(int i = 0; i < 6; i++) {
+        patch1.ctrlp[i] = patch1.ctrlp[i] - vel1 * Rational("1/2");
+        patch2.ctrlp[i] = patch2.ctrlp[i] - vel2 * Rational("1/2");
+    }
+
+    std::cout << "patch1 ctrlp after setting: " << std::endl;
+    for(int i=0; i<6; i++)
+        std::cout << patch1.ctrlp[i].transpose() << std::endl;
+    std::cout << "patch2 ctrlp after setting: " << std::endl;
+    for(int i=0; i<6; i++)
+        std::cout << patch2.ctrlp[i].transpose() << std::endl;
+    
+    std::cout << "patch1 velp: " << std::endl;
+    for(int i=0; i<6; i++)
+        std::cout << patch1.velp[i].transpose() << std::endl;
+    std::cout << "patch2 velp: " << std::endl;
+    for(int i=0; i<6; i++)
+        std::cout << patch2.velp[i].transpose() << std::endl;
+
     // ========== 8. 局部切分 ==========
-    TriParamBound bound1 = edgeface::genLocalParam(uv1);
-    TriParamBound bound2 = edgeface::genLocalParam(uv2);
-    Array2r local_uv1 = computeLocalUV(BaryCoord(uv1), bound1);
-    Array2r local_uv2 = computeLocalUV(BaryCoord(uv2), bound2);
+    TriParamBound bound1;// = edgeface::genLocalParam(uv1);
+    TriParamBound bound2;// = edgeface::genLocalParam(uv2);
+    Array2r local_uv1;// = computeLocalUV(BaryCoord(uv1), bound1);
+    Array2r local_uv2;// = computeLocalUV(BaryCoord(uv2), bound2);
     
-    std::cout << "\n=== Local Parameters ===" << std::endl;
-    std::cout << "local_uv1: " << local_uv1.transpose() << std::endl;
-    std::cout << "local_uv2: " << local_uv2.transpose() << std::endl;
+    // std::cout << "\n=== Local Parameters ===" << std::endl;
+    // std::cout << "local_uv1: " << local_uv1.transpose() << std::endl;
+    // std::cout << "local_uv2: " << local_uv2.transpose() << std::endl;
     
-    TriQuadBezier localPatch1 = patch1.divideBezierPatch(bound1);
-    TriQuadBezier localPatch2 = patch2.divideBezierPatch(bound2);
+    TriQuadBezier localPatch1;// = patch1.divideBezierPatch(bound1);
+    TriQuadBezier localPatch2;// = patch2.divideBezierPatch(bound2);
     
-    Vector3r localNormal1 = localPatch1.evaluateNormal(local_uv1);
-    Vector3r localNormal2 = localPatch2.evaluateNormal(local_uv2);
+    Vector3r localNormal1;// = localPatch1.evaluateNormal(local_uv1);
+    Vector3r localNormal2;// = localPatch2.evaluateNormal(local_uv2);
     
     // std::cout << "Local patch1 normal: " << localNormal1.transpose() << std::endl;
     // std::cout << "Local patch2 normal: " << localNormal2.transpose() << std::endl;
@@ -1498,7 +1594,7 @@ CollisionPoint generateNearMissVF(unsigned seed, Rational gap)
     std::cout << "uv2 (vertex): " << uv2.transpose() << std::endl;
     
     // ========== 2. 计算面片的几何信息 ==========
-    Vector3r faceNormal = patch1.evaluateNormal(uv1);
+    Vector3r faceNormal = standardVF.normal1;
     Vector3r partialU1 = patch1.evaluatePartialU(uv1);
     Vector3r partialV1 = patch1.evaluatePartialV(uv1);
     
@@ -1532,13 +1628,23 @@ CollisionPoint generateNearMissVF(unsigned seed, Rational gap)
         return CollisionPoint();
     }
     
+    double normNormal = (double)faceNormal.norm();
+    double log2val = std::log2(normNormal);
+    int n = static_cast<int>(std::round(log2val));
+    Rational scale = Rational(1) / Rational(1 << n);
+
+    Vector3f tmpNormal = faceNormal.cast<float>();
+
     std::cout << "\n=== Applying Separation ===" << std::endl;
     std::cout << "Gap parameter: " << (double)gap << std::endl;
+    std::cout << "Scale factor: " << (double)scale << std::endl;
     std::cout << "Separation direction (face normal, not normalized): " << faceNormal.transpose() << std::endl;
     std::cout << "Face normal magnitude: " << (double)faceNormal.norm() << std::endl;
+
+    faceNormal = tmpNormal.cast<Rational>();    
     
     // 计算分离偏移量（沿面法线方向，不归一化）
-    Vector3r separationOffset = gap * faceNormal;
+    Vector3r separationOffset = gap * faceNormal * scale;
     std::cout << "Separation offset: " << separationOffset.transpose() << std::endl;
     std::cout << "Separation offset magnitude: " << (double)separationOffset.norm() << std::endl;
     
@@ -1562,7 +1668,7 @@ CollisionPoint generateNearMissVF(unsigned seed, Rational gap)
     // 面片速度：在切平面内（垂直于法线）
     // 点的速度：也在面的切平面内（垂直于法线），模拟点在面的切平面上滑动
     
-    std::uniform_real_distribution<float> coefDist(-5.0, 5.0);
+    std::uniform_real_distribution<float> coefDist(-5.0, 7.0);
     
     // 面片的速度：在切平面内随机方向
     Rational coef_u1 = Rational(coefDist(engine));
@@ -1613,6 +1719,26 @@ CollisionPoint generateNearMissVF(unsigned seed, Rational gap)
         patch2.velp[i] = vel2;
     }
     
+    // 适应batchProcess folder的设定，2个patch沿速度反向运动1/2s
+    for(int i = 0; i < 6; i++) {
+        patch1.ctrlp[i] = patch1.ctrlp[i] - vel1 * Rational("1/2");
+        patch2.ctrlp[i] = patch2.ctrlp[i] - vel2 * Rational("1/2");
+    }
+
+    std::cout << "patch1 ctrlp after setting: " << std::endl;
+    for(int i=0; i<6; i++)
+        std::cout << patch1.ctrlp[i].transpose() << std::endl;
+    std::cout << "patch2 ctrlp after setting: " << std::endl;
+    for(int i=0; i<6; i++)
+        std::cout << patch2.ctrlp[i].transpose() << std::endl;
+    
+    std::cout << "patch1 velp: " << std::endl;
+    for(int i=0; i<6; i++)
+        std::cout << patch1.velp[i].transpose() << std::endl;
+    std::cout << "patch2 velp: " << std::endl;
+    for(int i=0; i<6; i++)
+        std::cout << patch2.velp[i].transpose() << std::endl;
+
     // ========== 8. 局部切分 ==========
     TriParamBound bound1 = generateLocalParamBound(uv1);
     TriParamBound bound2 = generateLocalParamBound(uv2);
@@ -1708,6 +1834,9 @@ CollisionPoint generateNearMissVE(unsigned seed, Rational gap)
     std::cout << "Perpendicular to edge: " << perpToEdge.transpose() << std::endl;
     std::cout << "Perpendicular magnitude: " << (double)perpToEdge.norm() << std::endl;
     
+    Vector3f tmpPerp = perpToEdge.cast<float>();
+    tmpPerp.normalize();
+
     // ========== 3. 验证初始接触状态 ==========
     Vector3r edgePoint = patch1.evaluatePatchPoint(uv1);
     Vector3r vertexPoint = patch2.evaluatePatchPoint(uv2);
@@ -1736,7 +1865,9 @@ CollisionPoint generateNearMissVE(unsigned seed, Rational gap)
     std::cout << "Gap parameter: " << (double)gap << std::endl;
     std::cout << "Separation direction (perpendicular to edge, not normalized): " << perpToEdge.transpose() << std::endl;
     std::cout << "Separation direction magnitude: " << (double)perpToEdge.norm() << std::endl;
-    
+
+    perpToEdge = tmpPerp.cast<Rational>();
+
     // 计算分离偏移量（沿垂直于边的方向，不归一化）
     Vector3r separationOffset = gap * perpToEdge;
     std::cout << "Separation offset: " << separationOffset.transpose() << std::endl;
@@ -1810,6 +1941,26 @@ CollisionPoint generateNearMissVE(unsigned seed, Rational gap)
         patch2.velp[i] = vel2;
     }
     
+    // 适应batchProcess folder的设定，2个patch沿速度反向运动1/2s
+    for(int i = 0; i < 6; i++) {
+        patch1.ctrlp[i] = patch1.ctrlp[i] - vel1 * Rational("1/2");
+        patch2.ctrlp[i] = patch2.ctrlp[i] - vel2 * Rational("1/2");
+    }
+
+    std::cout << "patch1 ctrlp after setting: " << std::endl;
+    for(int i=0; i<6; i++)
+        std::cout << patch1.ctrlp[i].transpose() << std::endl;
+    std::cout << "patch2 ctrlp after setting: " << std::endl;
+    for(int i=0; i<6; i++)
+        std::cout << patch2.ctrlp[i].transpose() << std::endl;
+    
+    std::cout << "patch1 velp: " << std::endl;
+    for(int i=0; i<6; i++)
+        std::cout << patch1.velp[i].transpose() << std::endl;
+    std::cout << "patch2 velp: " << std::endl;
+    for(int i=0; i<6; i++)
+        std::cout << patch2.velp[i].transpose() << std::endl;
+
     // ========== 8. 局部切分 ==========
     TriParamBound bound1 = edgeface::genLocalParam(uv1);
     TriParamBound bound2 = generateLocalParamBound(uv2);
@@ -1949,6 +2100,10 @@ CollisionPoint generateNearMissVV(unsigned seed, Rational gap)
     std::cout << "Separation direction (not normalized): " << separationDir.transpose() << std::endl;
     std::cout << "Separation direction magnitude: " << (double)separationDir.norm() << std::endl;
     
+    Vector3f tmpSeparationDir = separationDir.cast<float>();
+    tmpSeparationDir.normalize();
+    separationDir = tmpSeparationDir.cast<Rational>(); 
+
     // 计算分离偏移量（沿分离方向，不归一化）
     Vector3r separationOffset = gap * separationDir;
     std::cout << "Separation offset: " << separationOffset.transpose() << std::endl;
@@ -1995,6 +2150,12 @@ CollisionPoint generateNearMissVV(unsigned seed, Rational gap)
     
     // tangent2 = separationDir × tangent1
     tangent2 = separationDir.cross(tangent1);
+    Vector3f tmpTangent2 = tangent2.cast<float>();
+    tmpTangent2.normalize();
+    tangent2 = tmpTangent2.cast<Rational>();
+    Vector3f tmpTangent1 = tangent1.cast<float>();
+    tmpTangent1.normalize();
+    tangent1 = tmpTangent1.cast<Rational>();
     
     std::cout << "\n=== Tangent Vectors (perpendicular to separation) ===" << std::endl;
     std::cout << "tangent1: " << tangent1.transpose() << std::endl;
@@ -2051,7 +2212,26 @@ CollisionPoint generateNearMissVV(unsigned seed, Rational gap)
         patch1.velp[i] = vel1;
         patch2.velp[i] = vel2;
     }
+
+    // 适应batchProcess folder的设定，2个patch沿速度反向运动1/2s
+    for(int i = 0; i < 6; i++) {
+        patch1.ctrlp[i] = patch1.ctrlp[i] - vel1 * Rational("1/2");
+        patch2.ctrlp[i] = patch2.ctrlp[i] - vel2 * Rational("1/2");
+    }
+    std::cout << "patch1 ctrlp after setting: " << std::endl;
+    for(int i=0; i<6; i++)
+        std::cout << patch1.ctrlp[i].transpose() << std::endl;
+    std::cout << "patch2 ctrlp after setting: " << std::endl;
+    for(int i=0; i<6; i++)
+        std::cout << patch2.ctrlp[i].transpose() << std::endl;
     
+    std::cout << "patch1 velp: " << std::endl;
+    for(int i=0; i<6; i++)
+        std::cout << patch1.velp[i].transpose() << std::endl;
+    std::cout << "patch2 velp: " << std::endl;
+    for(int i=0; i<6; i++)
+        std::cout << patch2.velp[i].transpose() << std::endl;
+
     // ========== 8. 局部切分 ==========
     TriParamBound bound1 = generateLocalParamBound(uv1);
     TriParamBound bound2 = generateLocalParamBound(uv2);
@@ -2150,8 +2330,10 @@ CollisionPoint generateSeparatedRandomBezierPatches(unsigned seed, int tasktype)
     // auto patch2Normal = patch2.evaluateNormal(uv2);
  
     Vector3r patch1Normal = generateIntegerPowerOfTwoNormal(engine);
+    Vector3r original_patch1Normal = patch1Normal;
     // Vector3r patch1Normal = Vector3r(-1024, 256, 65536);
     Vector3r patch2Normal = -patch1Normal; 
+    Vector3r original_patch2Normal = patch2Normal;
 
     // patch1Normal = patch1Normal / patch1Normal.norm();
     // patch2Normal = patch2Normal / patch2Normal.norm();
@@ -2258,7 +2440,7 @@ CollisionPoint generateSeparatedRandomBezierPatches(unsigned seed, int tasktype)
     for (int i=0; i<6; i++)
         std::cout << localPatch2.velp[i][0] << " " << localPatch2.velp[i][1] << " " << localPatch2.velp[i][2] << std::endl;
 
-    CollisionPoint cp = { localPatch1, localPatch2, uv1, uv2, local_uv1, local_uv2, patch1Normal, patch2Normal, actual_vel1, actual_vel2};
+    CollisionPoint cp = { localPatch1, localPatch2, uv1, uv2, local_uv1, local_uv2, original_patch1Normal, original_patch2Normal, actual_vel1, actual_vel2};
     // cp = { patch1, patch2, uv1, uv2, local_uv1, local_uv2, patch1Normal, patch2Normal, vel1, vel2};
     // return cp;
 
@@ -2390,8 +2572,8 @@ namespace genStandardData
     inline unsigned extractSeedFromFolderName(const std::string& folderName) 
     {
         size_t seedPos = folderName.find("_seed");
-        if (seedPos == std::string::npos) 
-            seedPos = folderName.find("_"); // 尝试仅寻找下划线
+        // if (seedPos == std::string::npos) 
+        //     seedPos = folderName.find("_"); // 尝试仅寻找下划线
 
         if (seedPos != std::string::npos) {
             try {
@@ -2433,6 +2615,28 @@ namespace genStandardData
         } else if (taskType == 5) {
             cp = generateVV(seed);
         }
+        else if (taskType == 6) {
+            cp = generateNearMissFF(seed);
+        }
+        else if (taskType == 7) {
+            cp = generateNearMissEF(seed);
+        }
+        else if (taskType == 8) {
+            cp = generateNearMissEE(seed);
+        }
+        else if (taskType == 9) {
+            cp = generateNearMissVF(seed);
+        }
+        else if (taskType == 10) {
+            cp = generateNearMissVE(seed);
+        }
+        else if (taskType == 11) {
+            cp = generateNearMissVV(seed);
+        }
+        else {
+            std::cerr << "Unsupported task type: " << taskType << std::endl;
+            return false;
+        }
 
         if (cp.vel1 == Vector3r::Zero() && cp.vel2 == Vector3r::Zero()) {
             std::cout << "Generate failed for seed: " << seed << std::endl;
@@ -2444,7 +2648,7 @@ namespace genStandardData
         std::filesystem::create_directories(outputPath);
 
         // 保存控制点位置和速度
-        saveControlPointsData(cp, outputPath.string(), datasetFilePath, seed);
+        saveControlPointsData(cp, outputPath.string(), datasetFilePath, seed, taskType);
 
         // 保存碰撞验证结果
         // bool collisionResult = verifyCollision(cp);
@@ -2457,7 +2661,7 @@ namespace genStandardData
 
     // 保存控制点数据
     inline void saveControlPointsData(const CollisionPoint& cp, const std::string& outputDir, 
-                                 const std::string& datasetFilePath, unsigned seed) 
+                                 const std::string& datasetFilePath, unsigned seed, int tasktype) 
     {
         std::cout<<"start save data"<<std::endl;
         // 创建或打开数据集CSV文件（追加模式）
@@ -2467,7 +2671,7 @@ namespace genStandardData
             return;
         }
         
-        bool genfp = 1;
+        bool genfp = 0;
 
         // 计算开始位置 = 初始位置 + 速度 × 1秒
         std::array<Vector3r, 6> startPos1, startPos2, endPos1, endPos2;
@@ -2488,6 +2692,12 @@ namespace genStandardData
                 endPos2[i] = endPos2[i] + cp.patch2.velp[i] * Rational("1/131072");
             }
         }
+
+        if (tasktype >= 6)
+        {
+            genfp = 1;
+        }
+
 
         // 将数据写入CSV文件格式: 每行为一个控制点，格式为x_num,x_denom,y_num,y_denom,z_num,z_denom,gt
         // 先写入patch1的起始位置（6个控制点）
@@ -2569,6 +2779,26 @@ namespace genStandardData
                 taskTypeStr="VertexEdge";
             else if(taskType==5)
                 taskTypeStr="VertexVertex";
+            else if(taskType==6)
+                taskTypeStr="NearMissFaceFace";
+            else if(taskType==7)
+                taskTypeStr="NearMissEdgeFace";
+            else if(taskType==8)
+                taskTypeStr="NearMissEdgeEdge";
+            else if(taskType==9)
+                taskTypeStr="NearMissVertexFace";
+            else if(taskType==10)
+                taskTypeStr="NearMissVertexEdge";
+            else if(taskType==11)
+                taskTypeStr="NearMissVertexVertex";
+            // else if(taskType==12)
+            //     taskTypeStr="SurfaceLineContact";
+            // else if(taskType==13)
+            //     taskTypeStr="PartiallyColinearControlPoints";
+            // else if(taskType==14)
+            //     taskTypeStr="FullyCoincidentPatches";
+            // else
+            //     taskTypeStr="RandomSeparatedPatches";
 
             // 创建数据集文件路径
             std::string datasetFilePath = baseDir + "/fp_dataset_type" + taskTypeStr + ".csv";

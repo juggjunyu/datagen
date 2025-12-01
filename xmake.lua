@@ -33,6 +33,7 @@ target("generator")
     add_deps("ccd_io")
     add_packages("eigen","fmt", {public = true})
     add_files("generator/**.cpp")
+    add_ldflags("-static", {force = true})
     --  if is_mode("debug") then
     --     add_cxflags("/Zi")  -- 生成 PDB 文件
     --     add_ldflags("/DEBUG")

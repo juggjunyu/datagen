@@ -25,6 +25,7 @@ using Eigen::Vector4d;
 using Eigen::MatrixXd;
 using Rational = rational::Rational;
 using Vector3r = Eigen::Matrix<Rational, 3, 1>;
+using Vector3f = Eigen::Matrix<float, 3, 1>;
 using Array2r = Eigen::Array<rational::Rational, 2, 1>;
 using Array2dError = std::pair<Array2d, Array2d>;
 const double INFT = std::numeric_limits<double>::infinity();

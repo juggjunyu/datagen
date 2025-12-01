@@ -29,3 +29,5 @@ output_EF.txt
 *.zip
 *.tar.gz
 plan.md
+*.obj
+output_data/

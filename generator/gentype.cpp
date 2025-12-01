@@ -494,7 +494,7 @@ TriParamBound genLocalParam(const Array2r& uv, Rational radius)
     
     // 步骤4: 确定边界方向和垂直方向的扩展半径
     // 确保半径也是2的方幂
-    int radiusPower = 3; // 默认 1/8
+    int radiusPower = 4; // 默认 1/8
     Rational powerRadius = Rational(1) / Rational(1 << radiusPower);
     
     // 调整半径使其接近输入的radius
@@ -603,13 +603,13 @@ TriParamBound genLocalParam(const Array2r& uv, Rational radius)
     local_uv << localBary[0], localBary[1];
     
     bool stillOnBoundary = false;
-    if (edge == 0 && std::abs(local_uv[1]) < epsilon) {
+    if (edge == 0 && local_uv[1] == 0 ) {
         stillOnBoundary = true;
         std::cout << "✓ Point still on bottom edge in local coordinates" << std::endl;
-    } else if (edge == 1 && std::abs(local_uv[0]) < epsilon) {
+    } else if (edge == 1 && local_uv[0] == 0) {
         stillOnBoundary = true;
         std::cout << "✓ Point still on left edge in local coordinates" << std::endl;
-    } else if (edge == 2 && std::abs(local_uv[0] + local_uv[1] - Rational(1)) < epsilon) {
+    } else if (edge == 2 && local_uv[0] + local_uv[1] - Rational(1) == 0) {
         stillOnBoundary = true;
         std::cout << "✓ Point still on hypotenuse in local coordinates" << std::endl;
     }

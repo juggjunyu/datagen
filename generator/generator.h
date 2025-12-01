@@ -37,7 +37,8 @@ std::pair<Vector3r, Vector3r> generateCollisionVelocities(
 // 生成与法线垂直的速度
 Vector3r generateVelocityPerpendicularToNormal(
     auto& engine,
-    const Vector3r& normal);
+    const Vector3r& partialU,
+    const Vector3r& partialV);
 // 生成碰撞速度场
 std::array<Vector3r, 6> generateVelocityField(
     auto& engine,
@@ -61,17 +62,17 @@ CollisionPoint generateVE(unsigned seed);
 //产生点点碰撞
 CollisionPoint generateVV(unsigned seed);
 //擦肩而过
-CollisionPoint generateNearMissFF(unsigned seed, Rational gap = Rational("1/16384"));
+CollisionPoint generateNearMissFF(unsigned seed, Rational gap = Rational("1/131072"));
 // Edge-Face擦肩而过
-CollisionPoint generateNearMissEF(unsigned seed, Rational gap = Rational("1/16384"));
+CollisionPoint generateNearMissEF(unsigned seed, Rational gap = Rational("1/131072"));
 // Edge-Edge擦肩而过
-CollisionPoint generateNearMissEE(unsigned seed, Rational gap = Rational("1/16384"));
+CollisionPoint generateNearMissEE(unsigned seed, Rational gap = Rational("1/131072"));
 // Vertex-Face擦肩而过
-CollisionPoint generateNearMissVF(unsigned seed, Rational gap = Rational("1/16384"));
+CollisionPoint generateNearMissVF(unsigned seed, Rational gap = Rational("1/131072"));
 // Vertex-Edge擦肩而过
-CollisionPoint generateNearMissVE(unsigned seed, Rational gap = Rational("1/16384"));
+CollisionPoint generateNearMissVE(unsigned seed, Rational gap = Rational("1/131072"));
 // Vertex-Vertex擦肩而过
-CollisionPoint generateNearMissVV(unsigned seed, Rational gap = Rational("1/16384"));
+CollisionPoint generateNearMissVV(unsigned seed, Rational gap = Rational("1/131072"));
 //产生随机2面碰撞（面面及其他）
 CollisionPoint generateSeparatedRandomBezierPatches(unsigned seed, int tasktype);
 
@@ -81,6 +82,6 @@ namespace genStandardData
     inline unsigned extractSeedFromFolderName(const std::string& folderName);
     inline bool processDataFolder(const std::filesystem::path& folderPath, int taskType, const std::string& datasetFilePath);
     inline void saveControlPointsData(const CollisionPoint& cp, const std::string& outputDir, 
-                                 const std::string& datasetFilePath, unsigned seed);
+                                 const std::string& datasetFilePath, unsigned seed, int taskType);
     void batchProcessFolders(const std::string& baseDir, int taskType);
 }
