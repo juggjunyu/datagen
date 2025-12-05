@@ -34,7 +34,7 @@ set LOG_FILE=generation_log_VV_!ATTEMPT_COUNT!.txt
 
 :: 运行生成器并捕获输出
 echo 正在运行generator...
-xmake r generator -t 3 -o "%OUTPUT_DIR%" > "!LOG_FILE!" 2>&1
+xmake r generator -t 5 -o "%OUTPUT_DIR%" > "!LOG_FILE!" 2>&1
 
 :: 等待片刻确保文件完全写入
 timeout /t 0 /nobreak > nul 2>&1

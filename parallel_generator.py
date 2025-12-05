@@ -17,11 +17,11 @@ from pathlib import Path
 
 # ========== 配置区域 ==========
 EXE_PATH = "E:\\research\\datagen\\build\\windows\\x64\\debug\\generator1.exe"  # 二进制文件路径
-OUTPUT_DIR_NAME = "temp_output"  # 输出目录名称（可包含相对路径）
-TASK_TYPE = 6  # 任务类型，0-11，None 表示不指定
-TARGET_COUNT = 840  # 目标数据组数
+OUTPUT_DIR_NAME = "Edge-Edge"  # 输出目录名称（可包含相对路径）
+TASK_TYPE = 8  # 任务类型，0-11，None 表示不指定
+TARGET_COUNT = 200  # 目标数据组数
 WORKER_COUNT = 16  # 并行进程数，None 表示自动设置为 cpu_count - 2
-FINAL_OUTPUT_DIR = "output_data_FFmiss"  # 最终输出目录
+FINAL_OUTPUT_DIR = "output_data_EEmiss"  # 最终输出目录
 TIMEOUT = 300  # 子进程超时时间（秒）
 # ==============================
 

@@ -31,3 +31,4 @@ output_EF.txt
 plan.md
 *.obj
 output_data/
+*.csv

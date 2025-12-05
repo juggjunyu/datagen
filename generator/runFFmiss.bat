@@ -3,7 +3,7 @@ chcp 65001 > nul
 setlocal enabledelayedexpansion
 
 :: 可自定义参数
-set TARGET_COUNT=1000
+set TARGET_COUNT=34
 set BASE_DIR=E:\research\data\Animation\Face-Face-miss
 @REM Generator will append _seed + random number to output directory name
 @REM To create subdirectories under BASE_DIR, output directory should be BASE_DIR\VV
