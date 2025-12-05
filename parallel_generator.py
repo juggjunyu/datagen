@@ -224,7 +224,6 @@ def main():
                     else:
                         fallback = output_folder or "<unknown>"
                         print(f"[Task {task_num}] 已生成 seed {seed} 数据但移动失败，结果仍位于: {fallback}")
-                        print(f"[进度 {success_count}/{TARGET_COUNT}], 总尝试: {total_attempts})")
                 else:
                     reason = result.get("reason") if isinstance(result, dict) else "unknown"
                     stdout_snippet = (result.get("stdout") or "")[:200] if isinstance(result, dict) else ""
@@ -234,6 +233,7 @@ def main():
                         print(f"  stdout: {stdout_snippet.strip()}")
                     if stderr_snippet:
                         print(f"  stderr: {stderr_snippet.strip()}")
+                    print(f"[进度 {success_count}/{TARGET_COUNT}], 总尝试: {total_attempts})")
 
                 cleanup_temp_dir(temp_dir)
 
