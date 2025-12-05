@@ -17,11 +17,11 @@ from pathlib import Path
 
 # ========== 配置区域 ==========
 EXE_PATH = "E:\\research\\datagen\\build\\windows\\x64\\debug\\generator1.exe"  # 二进制文件路径
-OUTPUT_DIR_NAME = "Edge-Edge"  # 输出目录名称（可包含相对路径）
-TASK_TYPE = 8  # 任务类型，0-11，None 表示不指定
-TARGET_COUNT = 200  # 目标数据组数
+OUTPUT_DIR_NAME = "Face-Face"  # 输出目录名称（可包含相对路径）
+TASK_TYPE = 0  # 任务类型，0-11，None 表示不指定
+TARGET_COUNT = 4000  # 目标数据组数
 WORKER_COUNT = 16  # 并行进程数，None 表示自动设置为 cpu_count - 2
-FINAL_OUTPUT_DIR = "output_data_EEmiss"  # 最终输出目录
+FINAL_OUTPUT_DIR = "output_data_Face-Face"  # 最终输出目录
 TIMEOUT = 300  # 子进程超时时间（秒）
 # ==============================
 
@@ -224,6 +224,7 @@ def main():
                     else:
                         fallback = output_folder or "<unknown>"
                         print(f"[Task {task_num}] 已生成 seed {seed} 数据但移动失败，结果仍位于: {fallback}")
+                        print(f"[进度 {success_count}/{TARGET_COUNT}], 总尝试: {total_attempts})")
                 else:
                     reason = result.get("reason") if isinstance(result, dict) else "unknown"
                     stdout_snippet = (result.get("stdout") or "")[:200] if isinstance(result, dict) else ""
