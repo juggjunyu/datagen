@@ -2680,7 +2680,11 @@ namespace genStandardData
             return;
         }
         
-        bool genfp = 1;
+        // GT=1表示真实碰撞(不加偏移), GT=0表示需要加偏移
+        int GT = 0;
+        
+        // 缩放比例配置（可根据需要调整）
+        Rational SCALE_FACTOR = Rational("1/131072");  // 例如: Rational(1, 2) 表示缩小到一半
 
         // 计算开始位置 = 初始位置 + 速度 × 1秒
         std::array<Vector3r, 6> startPos1, startPos2, endPos1, endPos2;
@@ -2691,7 +2695,8 @@ namespace genStandardData
             endPos2[i] = cp.patch2.ctrlp[i];
         }
 
-        if (genfp)
+        // GT=0时需要加上与速度相关的偏移W
+        if (GT == 0)
         {
             for (int i = 0; i < 6; i++)
             {
@@ -2702,9 +2707,13 @@ namespace genStandardData
             }
         }
 
-        if (tasktype >= 6)
+        // 应用缩放比例
+        for (int i = 0; i < 6; i++)
         {
-            genfp = 1;
+            startPos1[i] = startPos1[i] * SCALE_FACTOR;
+            startPos2[i] = startPos2[i] * SCALE_FACTOR;
+            endPos1[i] = endPos1[i] * SCALE_FACTOR;
+            endPos2[i] = endPos2[i] * SCALE_FACTOR;
         }
 
 
@@ -2713,28 +2722,28 @@ namespace genStandardData
         for (int i = 0; i < 6; i++) {
             csvFile << startPos1[i](0).numerator_str() << "," << startPos1[i](0).denominator_str() << ","
                     << startPos1[i](1).numerator_str() << "," << startPos1[i](1).denominator_str() << ","
-                    << startPos1[i](2).numerator_str() << "," << startPos1[i](2).denominator_str() << "," << (!genfp) << std::endl;
+                    << startPos1[i](2).numerator_str() << "," << startPos1[i](2).denominator_str() << "," << GT << std::endl;
         }
 
         // 再写入patch2的起始位置（6个控制点）
         for (int i = 0; i < 6; i++) {
             csvFile << startPos2[i](0).numerator_str() << "," << startPos2[i](0).denominator_str() << ","
                     << startPos2[i](1).numerator_str() << "," << startPos2[i](1).denominator_str() << ","
-                    << startPos2[i](2).numerator_str() << "," << startPos2[i](2).denominator_str() << "," << (!genfp) << std::endl;
+                    << startPos2[i](2).numerator_str() << "," << startPos2[i](2).denominator_str() << "," << GT << std::endl;
         }
 
         // 写入patch1的结束位置（初始位置，6个控制点）
         for (int i = 0; i < 6; i++) {
             csvFile << endPos1[i](0).numerator_str() << "," << endPos1[i](0).denominator_str() << ","
                     << endPos1[i](1).numerator_str() << "," << endPos1[i](1).denominator_str() << ","
-                    << endPos1[i](2).numerator_str() << "," << endPos1[i](2).denominator_str() << "," << (!genfp) << std::endl;
+                    << endPos1[i](2).numerator_str() << "," << endPos1[i](2).denominator_str() << "," << GT << std::endl;
         }
 
         // 写入patch2的结束位置（初始位置，6个控制点）
         for (int i = 0; i < 6; i++) {
             csvFile << endPos2[i](0).numerator_str() << "," << endPos2[i](0).denominator_str() << ","
                     << endPos2[i](1).numerator_str() << "," << endPos2[i](1).denominator_str() << ","
-                    << endPos2[i](2).numerator_str() << "," << endPos2[i](2).denominator_str() << "," << (!genfp) << std::endl;
+                    << endPos2[i](2).numerator_str() << "," << endPos2[i](2).denominator_str() << "," << GT << std::endl;
         }
         
         csvFile.close();

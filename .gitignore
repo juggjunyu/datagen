@@ -34,3 +34,4 @@ output_data/
 *.csv
 record.md
 
+.github/copilot-instructions.md
