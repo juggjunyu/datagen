@@ -2593,8 +2593,12 @@ namespace genStandardData
         std::string folderName = folderPath.filename().string();
         unsigned seed = extractSeedFromFolderName(folderName);
         
+
+        std::string errorLogPath = "process_error.log";
         if (seed == 0) {
             std::cerr << "Invalid seed for folder: " << folderName << std::endl;
+            std::ofstream log(errorLogPath, std::ios::app);
+            log << "Invalid seed for folder: " << folderName << std::endl;
             return false;
         }
 
@@ -2633,13 +2637,18 @@ namespace genStandardData
         else if (taskType == 11) {
             cp = generateNearMissVV(seed);
         }
+
         else {
             std::cerr << "Unsupported task type: " << taskType << std::endl;
+            std::ofstream log(errorLogPath, std::ios::app);
+            log << "Unsupported task type: " << taskType << " for folder: " << folderName << std::endl;
             return false;
         }
 
         if (cp.vel1 == Vector3r::Zero() && cp.vel2 == Vector3r::Zero()) {
             std::cout << "Generate failed for seed: " << seed << std::endl;
+            std::ofstream log(errorLogPath, std::ios::app);
+            log << "Generate failed for seed: " << seed << " in folder: " << folderName << std::endl;
             return false;
         }
 
@@ -2671,7 +2680,7 @@ namespace genStandardData
             return;
         }
         
-        bool genfp = 0;
+        bool genfp = 1;
 
         // 计算开始位置 = 初始位置 + 速度 × 1秒
         std::array<Vector3r, 6> startPos1, startPos2, endPos1, endPos2;

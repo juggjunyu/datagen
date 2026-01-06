@@ -112,8 +112,7 @@ int main(int argc, char *argv[])
     const auto taskType = std::any_cast<int>(parser->getValueByName("type"));
 
     unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
-    // seed = 3366774727;
-    // seed = 1916078341;
+    // seed = 4288348963;
     std::cout << "seed: " << seed << std::endl;
 
     // 批处理模式：扫描文件夹并生成CSV

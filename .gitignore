@@ -32,3 +32,5 @@ plan.md
 *.obj
 output_data/
 *.csv
+record.md
+
