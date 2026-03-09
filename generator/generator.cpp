@@ -72,9 +72,90 @@ bool verifyCollision(const CollisionPoint& cp, const float &eps = 1e-10)
     return (p1 - p2).norm() < eps;
 }
 
-bool testAdditionalCollisions(const CollisionPoint& cp)
+bool testAdditionalCollisions(const CollisionPoint& cp, int taskType)
 {
     std::cout << "test CCD...\n" << std::endl;
+    
+    // 针对 tasktype==12-17 (NearHit 系列) 的特殊处理
+    if (taskType >= 12 && taskType <= 17) {
+        std::cout << "=== Special handling for NearHit series (tasktype=" << taskType << ") ===" << std::endl;
+        
+        TriQuadBezier patch1 = cp.patch1, patch2 = cp.patch2;
+        Array2r uv1 = cp.local_uv1, uv2 = cp.local_uv2;
+        BoundingBoxType bb = BoundingBoxType::OBB;
+        const double deltaDist = 1e-6;
+        
+        // 测试1: 正向检测 [0, 0.5]
+        std::cout << "\n--- Test 1: Forward detection [0, 0.5] ---" << std::endl;
+        TriQuadBezier patch1_forward = patch1, patch2_forward = patch2;
+        Array2r uv1_forward = uv1, uv2_forward = uv2;
+        
+        auto start1 = std::chrono::high_resolution_clock::now();
+        Rational collisionTime1 = SolverTD<TriQuadBezier, TriQuadBezier, TriParamBound, TriParamBound>::solveCCD(
+            patch1_forward.ctrlp, patch1_forward.velp, patch2_forward.ctrlp, patch2_forward.velp, 
+            uv1_forward, uv2_forward, bb, deltaDist, 0.5);
+        auto end1 = std::chrono::high_resolution_clock::now();
+        std::chrono::duration<double> elapsed1 = end1 - start1;
+        
+        std::cout << "Forward collision time: " << (double)collisionTime1 << std::endl;
+        std::cout << "Forward detection time: " << elapsed1.count() << " seconds" << std::endl;
+        
+        // 测试2: 反向检测 [0, 0.5] (从t=1到t=0.5)
+        std::cout << "\n--- Test 2: Backward detection [0, 0.5] (from t=1 to t=0.5) ---" << std::endl;
+        TriQuadBezier patch1_backward = patch1, patch2_backward = patch2;
+        Array2r uv1_backward = uv1, uv2_backward = uv2;
+        
+        // 平移到 t=1
+        for(int i = 0; i < 6; i++) {
+            patch1_backward.ctrlp[i] = patch1_backward.ctrlp[i] + patch1_backward.velp[i] * 1.0;
+            patch2_backward.ctrlp[i] = patch2_backward.ctrlp[i] + patch2_backward.velp[i] * 1.0;
+        }
+        
+        // 反向速度
+        for(int i = 0; i < 6; i++) {
+            patch1_backward.velp[i] = -patch1_backward.velp[i];
+            patch2_backward.velp[i] = -patch2_backward.velp[i];
+        }
+        
+        auto start2 = std::chrono::high_resolution_clock::now();
+        Rational collisionTime2 = SolverTD<TriQuadBezier, TriQuadBezier, TriParamBound, TriParamBound>::solveCCD(
+            patch1_backward.ctrlp, patch1_backward.velp, patch2_backward.ctrlp, patch2_backward.velp, 
+            uv1_backward, uv2_backward, bb, deltaDist, 0.5);
+        auto end2 = std::chrono::high_resolution_clock::now();
+        std::chrono::duration<double> elapsed2 = end2 - start2;
+        
+        std::cout << "Backward collision time: " << (double)collisionTime2 << std::endl;
+        std::cout << "Backward detection time: " << elapsed2.count() << " seconds" << std::endl;
+        
+        // 判断条件：两个碰撞时间都 >= 0.5
+        std::cout << "\n--- Final judgment ---" << std::endl;
+        bool forwardAtHalf = (collisionTime1 >= 0.5 || collisionTime1 < 0);
+        bool backwardAtHalf = (collisionTime2 >= 0.5 || collisionTime2 < 0);
+        
+        std::cout << "Forward collision at t=0.5 only: " << (forwardAtHalf ? "YES" : "NO") << std::endl;
+        std::cout << "Backward collision at t=0.5 only: " << (backwardAtHalf ? "YES" : "NO") << std::endl;
+        
+        if (forwardAtHalf && backwardAtHalf) {
+            std::cout << "Result: Only collision at t=0.5 (instantaneous contact) -> return false" << std::endl;
+            std::cout << "no collision" << std::endl;
+            return false;
+        } else {
+            std::cout << "Result: Collision at other times detected -> return true" << std::endl;
+            if (collisionTime1 > -1 && collisionTime1 < 0.5) {
+                std::cout << "Forward collision detected at t=" << (double)collisionTime1 << std::endl;
+                std::cout << "uv of patch1: (" << (double)uv1_forward[0] << ", " << (double)uv1_forward[1] << ")" << std::endl;
+                std::cout << "uv of patch2: (" << (double)uv2_forward[0] << ", " << (double)uv2_forward[1] << ")" << std::endl;
+            }
+            if (collisionTime2 > -1 && collisionTime2 < 0.5) {
+                std::cout << "Backward collision detected at t=" << (1.0 - (double)collisionTime2) << " (original time)" << std::endl;
+                std::cout << "uv of patch1: (" << (double)uv1_backward[0] << ", " << (double)uv1_backward[1] << ")" << std::endl;
+                std::cout << "uv of patch2: (" << (double)uv2_backward[0] << ", " << (double)uv2_backward[1] << ")" << std::endl;
+            }
+            return true;
+        }
+    }
+    
+    // 标准处理流程（其他tasktype）
     TriQuadBezier patch1 = cp.patch1, patch2 = cp.patch2;
     
     Array2r uv1 = cp.local_uv1, uv2 = cp.local_uv2;
@@ -236,66 +317,6 @@ Vector3r generateVelocityPerpendicularToNormal(
     // Rational speed = Rational(speedDist(engine));
     
     return direction;
-}
-
-std::array<Vector3r, 6> generateVelocityField(
-    auto& engine,
-    const Vector3r& collisionVel,
-    const Array2r& uv,
-    const std::array<Vector3r, 6>& controlPoints) 
-{
-    std::uniform_real_distribution<float> dist(-5.0, 5.0);
-    std::array<Vector3r, 6> velocities;
-    
-    // 随机生成前5个控制点的速度
-    for(int i = 0; i < 5; i++) 
-        velocities[i] = Vector3r(dist(engine), dist(engine), dist(engine));
-
-    BaryCoord coord(uv);
-    Rational w = coord.w;
-    Rational u = coord.u;
-    Rational v = coord.v;
-    
-    // 计算基函数系数
-    Rational coeffs[6] = {
-        w*w,             // 控制点0的系数
-        Rational(2)*w*u, // 控制点1的系数
-        u*u,             // 控制点2的系数
-        Rational(2)*w*v, // 控制点3的系数
-        Rational(2)*u*v, // 控制点4的系数
-        v*v              // 控制点5的系数
-    };
-    
-    // 找到系数绝对值最大的控制点作为求解控制点
-    int maxIndex = 0;
-    Rational maxCoeff = std::abs(coeffs[0]);
-    
-    for (int i = 1; i < 6; i++) {
-        if (std::abs(coeffs[i]) > maxCoeff) {
-            maxIndex = i;
-            maxCoeff = std::abs(coeffs[i]);
-        }
-    }
-    
-    // 如果最大系数仍然太小，直接设置最后一个控制点的速度为碰撞速度
-    const Rational epsilon = Rational(1)/Rational(10000);
-    if (maxCoeff < epsilon) {
-        velocities[5] = collisionVel;
-        return velocities;
-    }
-    
-    // 计算选中的控制点速度
-    Vector3r sumOtherTerms = Vector3r::Zero();
-    for (int i = 0; i < 6; i++) {
-        if (i != maxIndex) {
-            sumOtherTerms = sumOtherTerms + coeffs[i] * velocities[i];
-        }
-    }
-    
-    // 求解选中的控制点速度
-    velocities[maxIndex] = (collisionVel - sumOtherTerms) / coeffs[maxIndex];
-    
-    return velocities;
 }
 
 // 通过采样确定两个patch的相对位置方向
@@ -509,11 +530,11 @@ CollisionPoint generateEF(unsigned seed)
     auto [vel1, vel2] = edgeface::genColVel(engine, patchNormal1, patch2, uv2);
     std::cout << "vel1: " << vel1.transpose() << std::endl;
     std::cout << "vel2: " << vel2.transpose() << std::endl;
-    // patch1.velp = generateVelocityField(engine, vel1, uv1, patch1.ctrlp);
-    // patch2.velp = generateVelocityField(engine, vel2, uv2, patch2.ctrlp);
+    patch1.velp = generateVelocityField(engine, vel1, uv1, patch1.ctrlp);
+    patch2.velp = generateVelocityField(engine, vel2, uv2, patch2.ctrlp);
 
-    patch1.velp = generateVelocityFieldIndependent(engine, actualNormal1);
-    patch2.velp = generateVelocityFieldIndependent(engine, -actualNormal1);
+    // patch1.velp = generateVelocityFieldIndependent(engine, actualNormal1);
+    // patch2.velp = generateVelocityFieldIndependent(engine, -actualNormal1);
 
 
     TriParamBound bound1 = generateLocalParamBound(uv1);
@@ -548,6 +569,15 @@ CollisionPoint generateEF(unsigned seed)
 
     CollisionPoint cp = { localPatch1, localPatch2, uv1, uv2, local_uv1, local_uv2, targetNormal, localPatch2.evaluateNormal(local_uv2), vel1, vel2};
     
+    if(checkCollisionPointPrecision(cp)) {
+        std::cout << "Precision check passed." << std::endl;
+    }
+    else {
+        std::cout << "Precision check failed!" << std::endl;
+        cp.vel1 = Vector3r(0,0,0);
+        cp.vel2 = Vector3r(0,0,0);
+    }
+
     std::cout << "collision point1: " << localPatch1.evaluatePatchPoint(local_uv1).transpose() << std::endl;
     std::cout << "collision point2: " << localPatch2.evaluatePatchPoint(local_uv2).transpose() << std::endl;
    
@@ -591,8 +621,8 @@ CollisionPoint generateEE(unsigned seed)
     // std::cout << "vel2: " << vel2.transpose() << std::endl;
     
     // 生成速度场
-    // patch1.velp = generateVelocityField(engine, vel1, uv1, patch1.ctrlp);
-    // patch2.velp = generateVelocityField(engine, vel2, uv2, patch2.ctrlp);
+    patch1.velp = generateVelocityField(engine, vel1, uv1, patch1.ctrlp);
+    patch2.velp = generateVelocityField(engine, vel2, uv2, patch2.ctrlp);
 
     std::cout << "patch1 normal: " << patch1.evaluateNormal(uv1).transpose() << std::endl;
     std::cout << "patch2 normal: " << patch2.evaluateNormal(uv2).transpose() << std::endl;
@@ -601,8 +631,8 @@ CollisionPoint generateEE(unsigned seed)
     if(usedNormal == Vector3r(0,0,0))
         usedNormal = patch2.evaluateNormal(uv2);
 
-    patch1.velp = generateVelocityFieldIndependent(engine, usedNormal);
-    patch2.velp = generateVelocityFieldIndependent(engine, -usedNormal);
+    // patch1.velp = generateVelocityFieldIndependent(engine, usedNormal);
+    // patch2.velp = generateVelocityFieldIndependent(engine, -usedNormal);
 
     // 局部切分（使用统一的边界参数域生成）
     TriParamBound bound1 = edgeface::genLocalParam(uv1);
@@ -670,6 +700,16 @@ CollisionPoint generateEE(unsigned seed)
     std::cout << "Edge2 tangent: " << tangent2.transpose() << std::endl;
     std::cout << "Tangent dot product: " << tangent1.dot(tangent2) << std::endl;
    
+    // 精度检测
+    if(checkCollisionPointPrecision(cp)) {
+        std::cout << "Precision check passed." << std::endl;
+    }
+    else {
+        std::cout << "Precision check failed!" << std::endl;
+        cp.vel1 = Vector3r(0,0,0);
+        cp.vel2 = Vector3r(0,0,0);
+    }
+   
     return cp;
 }
 
@@ -694,10 +734,10 @@ CollisionPoint generateVF(unsigned seed)
     auto [vel1, vel2] = vertexface::genColVel(engine, patchNormal1, patch2, uv2);
     // std::cout << "vel1: " << vel1.transpose() << std::endl;
     // std::cout << "vel2: " << vel2.transpose() << std::endl;
-    // patch1.velp = generateVelocityField(engine, vel1, uv1, patch1.ctrlp);
-    // patch2.velp = generateVelocityField(engine, vel2, uv2, patch2.ctrlp);
-    patch1.velp = generateVelocityFieldIndependent(engine, patchNormal1);
-    patch2.velp = generateVelocityFieldIndependent(engine, -patchNormal1);
+    patch1.velp = generateVelocityField(engine, vel1, uv1, patch1.ctrlp);
+    patch2.velp = generateVelocityField(engine, vel2, uv2, patch2.ctrlp);
+    // patch1.velp = generateVelocityFieldIndependent(engine, patchNormal1);
+    // patch2.velp = generateVelocityFieldIndependent(engine, -patchNormal1);
 
     TriParamBound bound1 = generateLocalParamBound(uv1);
     TriParamBound bound2 = generateLocalParamBound(uv2);
@@ -729,6 +769,16 @@ CollisionPoint generateVF(unsigned seed)
     std::cout << "collision point1: " << localPatch1.evaluatePatchPoint(local_uv1).transpose() << std::endl;
     std::cout << "collision point2: " << localPatch2.evaluatePatchPoint(local_uv2).transpose() << std::endl;
    
+    // 精度检测
+    if(checkCollisionPointPrecision(cp)) {
+        std::cout << "Precision check passed." << std::endl;
+    }
+    else {
+        std::cout << "Precision check failed!" << std::endl;
+        cp.vel1 = Vector3r(0,0,0);
+        cp.vel2 = Vector3r(0,0,0);
+    }
+
     return cp;
 }
 
@@ -762,11 +812,11 @@ CollisionPoint generateVE(unsigned seed)
     auto [vel1, vel2] = vertexedge::genColVel(engine, patch1, patch2, uv1, uv2);
     // std::cout << "vel1: " << vel1.transpose() << std::endl;
     // std::cout << "vel2: " << vel2.transpose() << std::endl;
-    // patch1.velp = generateVelocityField(engine, vel1, uv1, patch1.ctrlp);
-    // patch2.velp = generateVelocityField(engine, vel2, uv2, patch2.ctrlp);
+    patch1.velp = generateVelocityField(engine, vel1, uv1, patch1.ctrlp);
+    patch2.velp = generateVelocityField(engine, vel2, uv2, patch2.ctrlp);
 
-    patch1.velp = generateVelocityFieldIndependent(engine, usedNormal);
-    patch2.velp = generateVelocityFieldIndependent(engine, -usedNormal);
+    // patch1.velp = generateVelocityFieldIndependent(engine, usedNormal);
+    // patch2.velp = generateVelocityFieldIndependent(engine, -usedNormal);
 
     TriParamBound bound1 = edgeface::genLocalParam(uv1);
     TriParamBound bound2 = generateLocalParamBound(uv2);
@@ -801,6 +851,16 @@ CollisionPoint generateVE(unsigned seed)
     std::cout << "collision point1: " << localPatch1.evaluatePatchPoint(local_uv1).transpose() << std::endl;
     std::cout << "collision point2: " << localPatch2.evaluatePatchPoint(local_uv2).transpose() << std::endl;
    
+    // 精度检测
+    if(checkCollisionPointPrecision(cp)) {
+        std::cout << "Precision check passed." << std::endl;
+    }
+    else {
+        std::cout << "Precision check failed!" << std::endl;
+        cp.vel1 = Vector3r(0,0,0);
+        cp.vel2 = Vector3r(0,0,0);
+    }
+
     return cp;
 }
 
@@ -827,14 +887,14 @@ CollisionPoint generateVV(unsigned seed)
     if(usedNormal == Vector3r(0,0,0))
         usedNormal = patch2.evaluateNormal(uv2);
 
-    auto [vel1, vel2] = vertexedge::genColVel(engine, patch1, patch2, uv1, uv2);
+    auto [vel1, vel2] = vertexvertex::genColVel(engine, patch1, patch2, uv1, uv2);
     // std::cout << "vel1: " << vel1.transpose() << std::endl;
     // std::cout << "vel2: " << vel2.transpose() << std::endl;
-    // patch1.velp = generateVelocityField(engine, vel1, uv1, patch1.ctrlp);
-    // patch2.velp = generateVelocityField(engine, vel2, uv2, patch2.ctrlp);
+    patch1.velp = generateVelocityField(engine, vel1, uv1, patch1.ctrlp);
+    patch2.velp = generateVelocityField(engine, vel2, uv2, patch2.ctrlp);
 
-    patch1.velp = generateVelocityFieldIndependent(engine, usedNormal);
-    patch2.velp = generateVelocityFieldIndependent(engine, -usedNormal);
+    // patch1.velp = generateVelocityFieldIndependent(engine, usedNormal);
+    // patch2.velp = generateVelocityFieldIndependent(engine, -usedNormal);
 
     TriParamBound bound1 = generateLocalParamBound(uv1);
     TriParamBound bound2 = generateLocalParamBound(uv2);
@@ -866,6 +926,16 @@ CollisionPoint generateVV(unsigned seed)
     std::cout << "collision point1: " << localPatch1.evaluatePatchPoint(local_uv1).transpose() << std::endl;
     std::cout << "collision point2: " << localPatch2.evaluatePatchPoint(local_uv2).transpose() << std::endl;
    
+    // 精度检测
+    if(checkCollisionPointPrecision(cp)) {
+        std::cout << "Precision check passed." << std::endl;
+    }
+    else {
+        std::cout << "Precision check failed!" << std::endl;
+        cp.vel1 = Vector3r(0,0,0);
+        cp.vel2 = Vector3r(0,0,0);
+    }
+
     return cp;
 }
 
@@ -1100,6 +1170,477 @@ CollisionPoint generateNearMissFF(unsigned seed, Rational gap)
     std::cout << "Target gap: " << (double)gap << std::endl;
     // std::cout << "Actual gap: " << (double)localGap << std::endl;
     std::cout << "Velocities are perpendicular to normals (sliding motion)" << std::endl;
+    
+    return cp;
+}
+
+// 生成面面恰好碰到的情况 (Near-Hit FF)
+// 与NearMissFF的区别：不进行平移，两个patch保持相切状态，速度垂直于法线
+CollisionPoint generateNearHitFF(unsigned seed)
+{
+    std::cout << "tasktype: near-hit FF (based on standard FF)" << std::endl;
+    std::mt19937_64 engine(seed);
+    
+    // ========== 1. 调用标准FF生成器（tasktype=0） ==========
+    // 这会生成两个法线反向、恰好相切的patch
+    CollisionPoint standardFF = generateSeparatedRandomBezierPatches(seed, 0);
+
+    if(standardFF.local_uv1[0] == 0 && standardFF.local_uv1[1] == 0 && 
+       standardFF.local_uv2[0] == 0 && standardFF.local_uv2[1] == 0) {
+        std::cerr << "Failed to generate valid standard FF collision point." << std::endl;
+        return CollisionPoint();
+    }
+
+    // 提取生成的patches和UV坐标
+    TriQuadBezier patch1 = standardFF.patch1;
+    TriQuadBezier patch2 = standardFF.patch2;
+    Array2r uv1 = standardFF.local_uv1;
+    Array2r uv2 = standardFF.local_uv2;
+    
+    std::cout << "Standard FF patches generated for near-hit" << std::endl;
+    std::cout << "uv1: " << uv1.transpose() << std::endl;
+    std::cout << "uv2: " << uv2.transpose() << std::endl;
+    
+    // ========== 2. 计算法线和偏导数 ==========
+    Vector3r patch1Normal = standardFF.normal1;
+    Vector3r patch2Normal = standardFF.normal2;
+    
+    Vector3r partialU1 = patch1.evaluatePartialU(uv1);
+    Vector3r partialV1 = patch1.evaluatePartialV(uv1);
+    Vector3r partialU2 = patch2.evaluatePartialU(uv2);
+    Vector3r partialV2 = patch2.evaluatePartialV(uv2);
+    
+    // ========== 3. 验证碰撞点位置（不做平移，保持相切） ==========
+    Vector3r collisionPoint1 = patch1.evaluatePatchPoint(uv1);
+    Vector3r collisionPoint2 = patch2.evaluatePatchPoint(uv2);
+    
+    std::cout << "\nCollision points (no separation):" << std::endl;
+    std::cout << "Point1: " << collisionPoint1.transpose() << std::endl;
+    std::cout << "Point2: " << collisionPoint2.transpose() << std::endl;
+    std::cout << "Distance: " << (double)(collisionPoint1 - collisionPoint2).norm() << std::endl;
+    
+    // ========== 4. 生成垂直于法线的速度（恰好碰到） ==========
+    // 使用partialU和partialV的线性组合，它们天然在切平面内
+    Vector3r vel1 = generateVelocityPerpendicularToNormal(engine, partialU1, partialV1);
+    Vector3r vel2 = generateVelocityPerpendicularToNormal(engine, partialU2, partialV2);
+    
+    // ========== 5. 生成速度场 ==========
+    for(int i = 0; i < 6; i++)
+        patch1.velp[i] = vel1;
+    for(int i = 0; i < 6; i++)
+        patch2.velp[i] = vel2;
+    
+    // 适应batchProcess folder的设定，2个patch沿速度反向运动1/2s
+    for(int i = 0; i < 6; i++) {
+        patch1.ctrlp[i] = patch1.ctrlp[i] + patch1.velp[i] * Rational("-1/2");
+        patch2.ctrlp[i] = patch2.ctrlp[i] + patch2.velp[i] * Rational("-1/2");
+    }
+    
+    // ========== 6. 局部切分 ==========
+    TriParamBound bound1 = generateLocalParamBound(uv1);
+    TriParamBound bound2 = generateLocalParamBound(uv2);
+    Array2r local_uv1 = computeLocalUV(BaryCoord(uv1), bound1);
+    Array2r local_uv2 = computeLocalUV(BaryCoord(uv2), bound2);
+    
+    TriQuadBezier localPatch1 = patch1.divideBezierPatch(bound1);
+    TriQuadBezier localPatch2 = patch2.divideBezierPatch(bound2);
+    
+    Vector3r localNormal1 = localPatch1.evaluateNormal(local_uv1);
+    Vector3r localNormal2 = localPatch2.evaluateNormal(local_uv2);
+    
+    // ========== 7. 构建CollisionPoint ==========
+    CollisionPoint cp = {
+        patch1,
+        patch2,
+        uv1,
+        uv2,
+        local_uv1,
+        local_uv2,
+        localNormal1,
+        localNormal2,
+        vel1,
+        vel2
+    };
+    
+    std::cout << "\n=== Near-Hit Generation Summary ===" << std::endl;
+    std::cout << "Configuration: Near-hit with perpendicular velocities" << std::endl;
+    std::cout << "Based on standard FF collision (tasktype=0)" << std::endl;
+    std::cout << "Gap: 0 (patches are tangent)" << std::endl;
+    std::cout << "Velocities are perpendicular to normals (touching motion)" << std::endl;
+    
+    
+    return cp;
+}
+
+// 生成边-面恰好碰到的情况 (Near-Hit EF)
+// 核心思路：调用 NearMissEF，然后撤销平移操作
+CollisionPoint generateNearHitEF(unsigned seed)
+{
+    std::cout << "tasktype: near-hit EF (calling near-miss EF then removing separation)" << std::endl;
+    
+    // ========== 1. 调用 NearMissEF 生成器 ==========
+    Rational gap = Rational("1/10");  // 使用默认 gap
+    CollisionPoint nearMiss = generateNearMissEF(seed, gap);
+    
+    // if(nearMiss.local_uv1[0] == 0 && nearMiss.local_uv1[1] == 0 && 
+    //    nearMiss.local_uv2[0] == 0 && nearMiss.local_uv2[1] == 0) {
+    //     std::cerr << "Failed to generate valid near-miss EF collision point." << std::endl;
+    //     return CollisionPoint();
+    // }
+    
+    // ========== 2. 提取 patches 和 UV 坐标 ==========
+    TriQuadBezier patch1 = nearMiss.patch1;
+    TriQuadBezier patch2 = nearMiss.patch2;
+    Array2r uv1 = nearMiss.local_uv1;
+    Array2r uv2 = nearMiss.local_uv2;
+    
+    // ========== 3. 计算平移量（通过碰撞点差值） ==========
+    // 注意：nearMiss 中的 patch 已经被平移过，且已经反向运动了 1/2s
+    // 我们需要先恢复到 t=0 的状态，计算平移量，然后撤销平移，再重新反向运动
+    
+    // 先恢复到 t=0
+    for(int i = 0; i < 6; i++) {
+        patch1.ctrlp[i] = patch1.ctrlp[i] - patch1.velp[i] * Rational("-1/2");
+        patch2.ctrlp[i] = patch2.ctrlp[i] - patch2.velp[i] * Rational("-1/2");
+    }
+    
+    // 计算当前碰撞点（已平移状态）
+    Vector3r collisionPoint1 = patch1.evaluatePatchPoint(uv1);
+    Vector3r collisionPoint2 = patch2.evaluatePatchPoint(uv2);
+    
+    // 计算平移量（patch2 被平移的量）
+    Vector3r separationOffset = collisionPoint2 - collisionPoint1;
+    
+    std::cout << "\n=== Removing Separation ===" << std::endl;
+    std::cout << "Separation offset to remove: " << separationOffset.transpose() << std::endl;
+    std::cout << "Separation magnitude: " << (double)separationOffset.norm() << std::endl;
+    
+    // ========== 4. 撤销平移（让 patch2 回到相切状态） ==========
+    for(int i = 0; i < 6; i++) {
+        patch2.ctrlp[i] = patch2.ctrlp[i] - separationOffset;
+    }
+    
+    // 验证撤销结果
+    collisionPoint1 = patch1.evaluatePatchPoint(uv1);
+    collisionPoint2 = patch2.evaluatePatchPoint(uv2);
+    Rational actualDistance = (collisionPoint1 - collisionPoint2).norm();
+    
+    std::cout << "After removing separation:" << std::endl;
+    std::cout << "Point1: " << collisionPoint1.transpose() << std::endl;
+    std::cout << "Point2: " << collisionPoint2.transpose() << std::endl;
+    std::cout << "Distance: " << (double)actualDistance << " (should be ~0)" << std::endl;
+    
+    // ========== 5. 重新应用反向运动 ==========
+    for(int i = 0; i < 6; i++) {
+        patch1.ctrlp[i] = patch1.ctrlp[i] + patch1.velp[i] * Rational("-1/2");
+        patch2.ctrlp[i] = patch2.ctrlp[i] + patch2.velp[i] * Rational("-1/2");
+    }
+    
+    // ========== 6. 构建 CollisionPoint（复用 NearMiss 的其他信息） ==========
+    CollisionPoint cp = nearMiss;  // 复用速度、局部UV等信息
+    cp.patch1 = patch1;  // 更新 patch（已撤销平移）
+    cp.patch2 = patch2;
+    
+    std::cout << "\n=== Near-Hit EF Generation Summary ===" << std::endl;
+    std::cout << "Configuration: Near-hit (separation removed from near-miss)" << std::endl;
+    std::cout << "Gap: 0 (edge and face are tangent)" << std::endl;
+    std::cout << "Velocities: inherited from near-miss EF" << std::endl;
+    
+    return cp;
+}
+
+// 生成边-边恰好碰到的情况 (Near-Hit EE)
+// 核心思路：调用 NearMissEE，然后撤销平移操作
+CollisionPoint generateNearHitEE(unsigned seed)
+{
+    std::cout << "tasktype: near-hit EE (calling near-miss EE then removing separation)" << std::endl;
+    
+    // ========== 1. 调用 NearMissEE 生成器 ==========
+    Rational gap = Rational("1/131072");  // 使用默认 gap
+    CollisionPoint nearMiss = generateNearMissEE(seed);
+    
+    // if(nearMiss.local_uv1[0] == 0 && nearMiss.local_uv1[1] == 0 && 
+    //    nearMiss.local_uv2[0] == 0 && nearMiss.local_uv2[1] == 0) {
+    //     std::cerr << "Failed to generate valid near-miss EE collision point." << std::endl;
+    //     return CollisionPoint();
+    // }
+    
+    // ========== 2. 提取 patches 和 UV 坐标 ==========
+    TriQuadBezier patch1 = nearMiss.patch1;
+    TriQuadBezier patch2 = nearMiss.patch2;
+    Array2r uv1 = nearMiss.local_uv1;
+    Array2r uv2 = nearMiss.local_uv2;
+    
+    // ========== 3. 计算平移量（通过碰撞点差值） ==========
+    // 先恢复到 t=0
+    for(int i = 0; i < 6; i++) {
+        patch1.ctrlp[i] = patch1.ctrlp[i] - patch1.velp[i] * Rational("-1/2");
+        patch2.ctrlp[i] = patch2.ctrlp[i] - patch2.velp[i] * Rational("-1/2");
+    }
+    
+    // 计算当前碰撞点（已平移状态）
+    Vector3r collisionPoint1 = patch1.evaluatePatchPoint(uv1);
+    Vector3r collisionPoint2 = patch2.evaluatePatchPoint(uv2);
+    
+    // 计算平移量（patch2 被平移的量）
+    Vector3r separationOffset = collisionPoint2 - collisionPoint1;
+    
+    std::cout << "\n=== Removing Separation ===" << std::endl;
+    std::cout << "Separation offset to remove: " << separationOffset.transpose() << std::endl;
+    std::cout << "Separation magnitude: " << (double)separationOffset.norm() << std::endl;
+    
+    // ========== 4. 撤销平移（让 patch2 回到相切状态） ==========
+    for(int i = 0; i < 6; i++) {
+        patch2.ctrlp[i] = patch2.ctrlp[i] - separationOffset;
+    }
+    
+    // 验证撤销结果
+    collisionPoint1 = patch1.evaluatePatchPoint(uv1);
+    collisionPoint2 = patch2.evaluatePatchPoint(uv2);
+    Rational actualDistance = (collisionPoint1 - collisionPoint2).norm();
+    
+    std::cout << "After removing separation:" << std::endl;
+    std::cout << "Point1: " << collisionPoint1.transpose() << std::endl;
+    std::cout << "Point2: " << collisionPoint2.transpose() << std::endl;
+    std::cout << "Distance: " << (double)actualDistance << " (should be ~0)" << std::endl;
+    
+    // ========== 5. 重新应用反向运动 ==========
+    for(int i = 0; i < 6; i++) {
+        patch1.ctrlp[i] = patch1.ctrlp[i] + patch1.velp[i] * Rational("-1/2");
+        patch2.ctrlp[i] = patch2.ctrlp[i] + patch2.velp[i] * Rational("-1/2");
+    }
+    
+    // ========== 6. 构建 CollisionPoint（复用 NearMiss 的其他信息） ==========
+    CollisionPoint cp = nearMiss;  // 复用速度、局部UV等信息
+    cp.patch1 = patch1;  // 更新 patch（已撤销平移）
+    cp.patch2 = patch2;
+    
+    std::cout << "\n=== Near-Hit EE Generation Summary ===" << std::endl;
+    std::cout << "Configuration: Near-hit (separation removed from near-miss)" << std::endl;
+    std::cout << "Gap: 0 (edges are tangent)" << std::endl;
+    std::cout << "Velocities: inherited from near-miss EE" << std::endl;
+    
+    return cp;
+}
+
+// 生成点-面恰好碰到的情况 (Near-Hit VF)
+// 核心思路：调用 NearMissVF，然后撤销平移操作
+CollisionPoint generateNearHitVF(unsigned seed)
+{
+    std::cout << "tasktype: near-hit VF (calling near-miss VF then removing separation)" << std::endl;
+    
+    // ========== 1. 调用 NearMissVF 生成器 ==========
+    Rational gap = Rational("1/131072");  // 使用默认 gap
+    CollisionPoint nearMiss = generateNearMissVF(seed, gap);
+    
+    // if(nearMiss.local_uv1[0] == 0 && nearMiss.local_uv1[1] == 0 && 
+    //    nearMiss.local_uv2[0] == 0 && nearMiss.local_uv2[1] == 0) {
+    //     std::cerr << "Failed to generate valid near-miss VF collision point." << std::endl;
+    //     return CollisionPoint();
+    // }
+    
+    // ========== 2. 提取 patches 和 UV 坐标 ==========
+    TriQuadBezier patch1 = nearMiss.patch1;
+    TriQuadBezier patch2 = nearMiss.patch2;
+    Array2r uv1 = nearMiss.local_uv1;
+    Array2r uv2 = nearMiss.local_uv2;
+    
+    // ========== 3. 计算平移量（通过碰撞点差值） ==========
+    // 先恢复到 t=0
+    for(int i = 0; i < 6; i++) {
+        patch1.ctrlp[i] = patch1.ctrlp[i] - patch1.velp[i] * Rational("-1/2");
+        patch2.ctrlp[i] = patch2.ctrlp[i] - patch2.velp[i] * Rational("-1/2");
+    }
+    
+    // 计算当前碰撞点（已平移状态）
+    Vector3r collisionPoint1 = patch1.evaluatePatchPoint(uv1);
+    Vector3r collisionPoint2 = patch2.evaluatePatchPoint(uv2);
+    
+    // 计算平移量（patch2 被平移的量）
+    Vector3r separationOffset = collisionPoint2 - collisionPoint1;
+    
+    std::cout << "\n=== Removing Separation ===" << std::endl;
+    std::cout << "Separation offset to remove: " << separationOffset.transpose() << std::endl;
+    std::cout << "Separation magnitude: " << (double)separationOffset.norm() << std::endl;
+    
+    // ========== 4. 撤销平移（让 patch2 回到相切状态） ==========
+    for(int i = 0; i < 6; i++) {
+        patch2.ctrlp[i] = patch2.ctrlp[i] - separationOffset;
+    }
+    
+    // 验证撤销结果
+    collisionPoint1 = patch1.evaluatePatchPoint(uv1);
+    collisionPoint2 = patch2.evaluatePatchPoint(uv2);
+    Rational actualDistance = (collisionPoint1 - collisionPoint2).norm();
+    
+    std::cout << "After removing separation:" << std::endl;
+    std::cout << "Point1: " << collisionPoint1.transpose() << std::endl;
+    std::cout << "Point2: " << collisionPoint2.transpose() << std::endl;
+    std::cout << "Distance: " << (double)actualDistance << " (should be ~0)" << std::endl;
+    
+    // ========== 5. 重新应用反向运动 ==========
+    for(int i = 0; i < 6; i++) {
+        patch1.ctrlp[i] = patch1.ctrlp[i] + patch1.velp[i] * Rational("-1/2");
+        patch2.ctrlp[i] = patch2.ctrlp[i] + patch2.velp[i] * Rational("-1/2");
+    }
+    
+    // ========== 6. 构建 CollisionPoint（复用 NearMiss 的其他信息） ==========
+    CollisionPoint cp = nearMiss;  // 复用速度、局部UV等信息
+    cp.patch1 = patch1;  // 更新 patch（已撤销平移）
+    cp.patch2 = patch2;
+    
+    std::cout << "\n=== Near-Hit VF Generation Summary ===" << std::endl;
+    std::cout << "Configuration: Near-hit (separation removed from near-miss)" << std::endl;
+    std::cout << "Gap: 0 (vertex and face are tangent)" << std::endl;
+    std::cout << "Velocities: inherited from near-miss VF" << std::endl;
+    
+    return cp;
+}
+
+// 生成点-边恰好碰到的情况 (Near-Hit VE)
+// 核心思路：调用 NearMissVE，然后撤销平移操作
+CollisionPoint generateNearHitVE(unsigned seed)
+{
+    std::cout << "tasktype: near-hit VE (calling near-miss VE then removing separation)" << std::endl;
+    
+    // ========== 1. 调用 NearMissVE 生成器 ==========
+    Rational gap = Rational("1/131072");  // 使用默认 gap
+    CollisionPoint nearMiss = generateNearMissVE(seed, gap);
+    
+    // if(nearMiss.local_uv1[0] == 0 && nearMiss.local_uv1[1] == 0 && 
+    //    nearMiss.local_uv2[0] == 0 && nearMiss.local_uv2[1] == 0) {
+    //     std::cerr << "Failed to generate valid near-miss VE collision point." << std::endl;
+    //     return CollisionPoint();
+    // }
+    
+    // ========== 2. 提取 patches 和 UV 坐标 ==========
+    TriQuadBezier patch1 = nearMiss.patch1;
+    TriQuadBezier patch2 = nearMiss.patch2;
+    Array2r uv1 = nearMiss.local_uv1;
+    Array2r uv2 = nearMiss.local_uv2;
+    
+    // ========== 3. 计算平移量（通过碰撞点差值） ==========
+    // 先恢复到 t=0
+    for(int i = 0; i < 6; i++) {
+        patch1.ctrlp[i] = patch1.ctrlp[i] - patch1.velp[i] * Rational("-1/2");
+        patch2.ctrlp[i] = patch2.ctrlp[i] - patch2.velp[i] * Rational("-1/2");
+    }
+    
+    // 计算当前碰撞点（已平移状态）
+    Vector3r collisionPoint1 = patch1.evaluatePatchPoint(uv1);
+    Vector3r collisionPoint2 = patch2.evaluatePatchPoint(uv2);
+    
+    // 计算平移量（patch2 被平移的量）
+    Vector3r separationOffset = collisionPoint2 - collisionPoint1;
+    
+    std::cout << "\n=== Removing Separation ===" << std::endl;
+    std::cout << "Separation offset to remove: " << separationOffset.transpose() << std::endl;
+    std::cout << "Separation magnitude: " << (double)separationOffset.norm() << std::endl;
+    
+    // ========== 4. 撤销平移（让 patch2 回到相切状态） ==========
+    for(int i = 0; i < 6; i++) {
+        patch2.ctrlp[i] = patch2.ctrlp[i] - separationOffset;
+    }
+    
+    // 验证撤销结果
+    collisionPoint1 = patch1.evaluatePatchPoint(uv1);
+    collisionPoint2 = patch2.evaluatePatchPoint(uv2);
+    Rational actualDistance = (collisionPoint1 - collisionPoint2).norm();
+    
+    std::cout << "After removing separation:" << std::endl;
+    std::cout << "Point1: " << collisionPoint1.transpose() << std::endl;
+    std::cout << "Point2: " << collisionPoint2.transpose() << std::endl;
+    std::cout << "Distance: " << (double)actualDistance << " (should be ~0)" << std::endl;
+    
+    // ========== 5. 重新应用反向运动 ==========
+    for(int i = 0; i < 6; i++) {
+        patch1.ctrlp[i] = patch1.ctrlp[i] + patch1.velp[i] * Rational("-1/2");
+        patch2.ctrlp[i] = patch2.ctrlp[i] + patch2.velp[i] * Rational("-1/2");
+    }
+    
+    // ========== 6. 构建 CollisionPoint（复用 NearMiss 的其他信息） ==========
+    CollisionPoint cp = nearMiss;  // 复用速度、局部UV等信息
+    cp.patch1 = patch1;  // 更新 patch（已撤销平移）
+    cp.patch2 = patch2;
+    
+    std::cout << "\n=== Near-Hit VE Generation Summary ===" << std::endl;
+    std::cout << "Configuration: Near-hit (separation removed from near-miss)" << std::endl;
+    std::cout << "Gap: 0 (vertex and edge are tangent)" << std::endl;
+    std::cout << "Velocities: inherited from near-miss VE" << std::endl;
+    
+    return cp;
+}
+
+// 生成点-点恰好碰到的情况 (Near-Hit VV)
+// 核心思路：调用 NearMissVV，然后撤销平移操作
+CollisionPoint generateNearHitVV(unsigned seed)
+{
+    std::cout << "tasktype: near-hit VV (calling near-miss VV then removing separation)" << std::endl;
+    
+    // ========== 1. 调用 NearMissVV 生成器 ==========
+    Rational gap = Rational("1/131072");  // 使用默认 gap
+    CollisionPoint nearMiss = generateNearMissVV(seed, gap);
+    
+    // if(nearMiss.local_uv1[0] == 0 && nearMiss.local_uv1[1] == 0 && 
+    //    nearMiss.local_uv2[0] == 0 && nearMiss.local_uv2[1] == 0) {
+    //     std::cerr << "Failed to generate valid near-miss VV collision point." << std::endl;
+    //     return CollisionPoint();
+    // }
+    
+    // ========== 2. 提取 patches 和 UV 坐标 ==========
+    TriQuadBezier patch1 = nearMiss.patch1;
+    TriQuadBezier patch2 = nearMiss.patch2;
+    Array2r uv1 = nearMiss.local_uv1;
+    Array2r uv2 = nearMiss.local_uv2;
+    
+    // ========== 3. 计算平移量（通过碰撞点差值） ==========
+    // 先恢复到 t=0
+    for(int i = 0; i < 6; i++) {
+        patch1.ctrlp[i] = patch1.ctrlp[i] - patch1.velp[i] * Rational("-1/2");
+        patch2.ctrlp[i] = patch2.ctrlp[i] - patch2.velp[i] * Rational("-1/2");
+    }
+    
+    // 计算当前碰撞点（已平移状态）
+    Vector3r collisionPoint1 = patch1.evaluatePatchPoint(uv1);
+    Vector3r collisionPoint2 = patch2.evaluatePatchPoint(uv2);
+    
+    // 计算平移量（patch2 被平移的量）
+    Vector3r separationOffset = collisionPoint2 - collisionPoint1;
+    
+    std::cout << "\n=== Removing Separation ===" << std::endl;
+    std::cout << "Separation offset to remove: " << separationOffset.transpose() << std::endl;
+    std::cout << "Separation magnitude: " << (double)separationOffset.norm() << std::endl;
+    
+    // ========== 4. 撤销平移（让 patch2 回到相切状态） ==========
+    for(int i = 0; i < 6; i++) {
+        patch2.ctrlp[i] = patch2.ctrlp[i] - separationOffset;
+    }
+    
+    // 验证撤销结果
+    collisionPoint1 = patch1.evaluatePatchPoint(uv1);
+    collisionPoint2 = patch2.evaluatePatchPoint(uv2);
+    Rational actualDistance = (collisionPoint1 - collisionPoint2).norm();
+    
+    std::cout << "After removing separation:" << std::endl;
+    std::cout << "Point1: " << collisionPoint1.transpose() << std::endl;
+    std::cout << "Point2: " << collisionPoint2.transpose() << std::endl;
+    std::cout << "Distance: " << (double)actualDistance << " (should be ~0)" << std::endl;
+    
+    // ========== 5. 重新应用反向运动 ==========
+    for(int i = 0; i < 6; i++) {
+        patch1.ctrlp[i] = patch1.ctrlp[i] + patch1.velp[i] * Rational("-1/2");
+        patch2.ctrlp[i] = patch2.ctrlp[i] + patch2.velp[i] * Rational("-1/2");
+    }
+    
+    // ========== 6. 构建 CollisionPoint（复用 NearMiss 的其他信息） ==========
+    CollisionPoint cp = nearMiss;  // 复用速度、局部UV等信息
+    cp.patch1 = patch1;  // 更新 patch（已撤销平移）
+    cp.patch2 = patch2;
+    
+    std::cout << "\n=== Near-Hit VV Generation Summary ===" << std::endl;
+    std::cout << "Configuration: Near-hit (separation removed from near-miss)" << std::endl;
+    std::cout << "Gap: 0 (vertices are tangent)" << std::endl;
+    std::cout << "Velocities: inherited from near-miss VV" << std::endl;
     
     return cp;
 }
@@ -2311,10 +2852,22 @@ CollisionPoint generateSeparatedRandomBezierPatches(unsigned seed, int tasktype)
     if(tasktype==11)
         return generateNearMissVV(seed);
     if(tasktype==12)
-        return degenerate::generateSurfaceLineContact(seed);
+        return generateNearHitFF(seed);
     if(tasktype==13)
-        return degenerate::generatePartiallyColinearControlPoints(seed);
+        return generateNearHitEF(seed);
     if(tasktype==14)
+        return generateNearHitEE(seed);
+    if(tasktype==15)
+        return generateNearHitVF(seed);
+    if(tasktype==16)
+        return generateNearHitVE(seed);
+    if(tasktype==17)
+        return generateNearHitVV(seed);
+    if(tasktype==18)
+        return degenerate::generateSurfaceLineContact(seed);
+    if(tasktype==19)
+        return degenerate::generatePartiallyColinearControlPoints(seed);
+    if(tasktype==20)
         return degenerate::generateFullyCoincidentPatches(seed);
     std::mt19937_64 engine(seed);
     std::uniform_real_distribution<float> dist1(0, 1), dist(-1, 1);//分布范围
@@ -2637,6 +3190,24 @@ namespace genStandardData
         else if (taskType == 11) {
             cp = generateNearMissVV(seed);
         }
+        else if (taskType == 12) {
+            cp = generateNearHitFF(seed);
+        }
+        else if (taskType == 13) {
+            cp = generateNearHitEF(seed);
+        }
+        else if (taskType == 14) {
+            cp = generateNearHitEE(seed);
+        }
+        else if (taskType == 15) {
+            cp = generateNearHitVF(seed);
+        }
+        else if (taskType == 16) {
+            cp = generateNearHitVE(seed);
+        }
+        else if (taskType == 17) {
+            cp = generateNearHitVV(seed);
+        }
 
         else {
             std::cerr << "Unsupported task type: " << taskType << std::endl;
@@ -2681,7 +3252,9 @@ namespace genStandardData
         }
         
         // GT=1表示真实碰撞(不加偏移), GT=0表示需要加偏移
-        int GT = 0;
+        int GT = 1;
+        if (tasktype >= 6 && tasktype <= 11)
+            GT = 0;
         
         // 缩放比例配置（可根据需要调整）
         Rational SCALE_FACTOR = Rational("1/131072");  // 例如: Rational(1, 2) 表示缩小到一半
@@ -2696,7 +3269,7 @@ namespace genStandardData
         }
 
         // GT=0时需要加上与速度相关的偏移W
-        if (GT == 0)
+        if (GT == 0 && tasktype < 6)
         {
             for (int i = 0; i < 6; i++)
             {
@@ -2809,17 +3382,29 @@ namespace genStandardData
                 taskTypeStr="NearMissVertexEdge";
             else if(taskType==11)
                 taskTypeStr="NearMissVertexVertex";
-            // else if(taskType==12)
-            //     taskTypeStr="SurfaceLineContact";
-            // else if(taskType==13)
-            //     taskTypeStr="PartiallyColinearControlPoints";
-            // else if(taskType==14)
-            //     taskTypeStr="FullyCoincidentPatches";
+            else if(taskType==12)
+                taskTypeStr="NearHitFaceFace";
+            else if(taskType==13)
+                taskTypeStr="NearHitEdgeFace";
+            else if(taskType==14)
+                taskTypeStr="NearHitEdgeEdge";
+            else if(taskType==15)
+                taskTypeStr="NearHitVertexFace";
+            else if(taskType==16)
+                taskTypeStr="NearHitVertexEdge";
+            else if(taskType==17)
+                taskTypeStr="NearHitVertexVertex";
+            else if(taskType==18)
+                taskTypeStr="SurfaceLineContact";
+            else if(taskType==19)
+                taskTypeStr="PartiallyColinearControlPoints";
+            else if(taskType==20)
+                taskTypeStr="FullyCoincidentPatches";
             // else
             //     taskTypeStr="RandomSeparatedPatches";
 
             // 创建数据集文件路径
-            std::string datasetFilePath = baseDir + "/fp_dataset_type" + taskTypeStr + ".csv";
+            std::string datasetFilePath = baseDir + "/fn_dataset_type" + taskTypeStr + ".csv";
             
             // 如果数据集文件已存在，先备份
             if (std::filesystem::exists(datasetFilePath)) {
@@ -2839,24 +3424,44 @@ namespace genStandardData
             csvFile << "# Lines 19-24: Patch2 end positions (t=0)" << std::endl;
             csvFile.close();
             
+            // 创建成功 seed 记录文件
+            std::string successSeedsPath = baseDir + "/success_seeds_type" + taskTypeStr + ".txt";
+            std::ofstream successSeedsFile(successSeedsPath);
+            successSeedsFile << "# Successfully processed seeds for task type " << taskType << " (" << taskTypeStr << ")" << std::endl;
+            successSeedsFile << "# Each line contains one seed value" << std::endl;
+            successSeedsFile.close();
+            
             int processedCount = 0;
             int successCount = 0;
             
             // 遍历目录，处理每个子文件夹
             for (const auto& entry : std::filesystem::directory_iterator(baseDir)) {
+                if(successCount >= 100) break; // 控制生成数量
                 if (entry.is_directory()) {
-                    std::cout << "Found folder: " << entry.path().filename() << std::endl;
+                    std::string folderName = entry.path().filename().string();
+                    std::cout << "Found folder: " << folderName << std::endl;
                     processedCount++;
                     if (processDataFolder(entry.path(), taskType, datasetFilePath)) {
                         successCount++;
+                        
+                        // 提取并记录成功的 seed
+                        unsigned seed = extractSeedFromFolderName(folderName);
+                        if (seed != 0) {
+                            std::ofstream seedFile(successSeedsPath, std::ios::app);
+                            seedFile << seed << std::endl;
+                            seedFile.close();
+                            std::cout << "Recorded success seed: " << seed << std::endl;
+                        }
                     }
                 }
             }
+            
             
             std::cout << "Batch processing complete." << std::endl;
             std::cout << "Total folders processed: " << processedCount << std::endl;
             std::cout << "Successful processing: " << successCount << std::endl;
             std::cout << "Dataset saved to: " << datasetFilePath << std::endl;
+            std::cout << "Success seeds saved to: " << successSeedsPath << std::endl;
             
         } catch (const std::exception& e) {
             std::cerr << "Error during batch processing: " << e.what() << std::endl;

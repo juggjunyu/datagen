@@ -15,7 +15,7 @@ namespace ccd_io {
 
 std::vector<CCDQuery> read_ccd_queries(const std::string& filename)
 {
-    // NOTE: If the file contains N lines, N % 8 == 0 because every 8 lines are
+    // NOTE: If the file contains N lines, N % 24 == 0 because every 8 lines are
     // a single query.
     std::vector<CCDQuery> queries;
 
@@ -33,7 +33,7 @@ std::vector<CCDQuery> read_ccd_queries(const std::string& filename)
         if (line[0] == '#')
             continue;
 
-        if (i % 8 == 0) {
+        if (i % 24 == 0) {
             // New query
             queries.emplace_back();
             gt_set = false;
@@ -51,9 +51,9 @@ std::vector<CCDQuery> read_ccd_queries(const std::string& filename)
         std::getline(line_stream, line_items[6], ','); // optional ground truth
 
         for (int j = 0; j < 3; j++) {
-            queries.back().vertices[i % 8][j] = rational::Rational(
+            queries.back().vertices[i % 24][j] = rational::Rational(
                 line_items[2 * j + 0], line_items[2 * j + 1]);
-            if (!std::isfinite(queries.back().vertices[i % 8][j])) {
+            if (!std::isfinite(queries.back().vertices[i % 24][j])) {
                 log_and_throw_error(
                     "Line {} in {} contains a non-integer!", i, filename);
             }
@@ -71,9 +71,9 @@ std::vector<CCDQuery> read_ccd_queries(const std::string& filename)
         }
     }
 
-    if (i % 8 != 0) {
+    if (i % 24 != 0) {
         log_and_throw_error(
-            "File {} has {} lines, which is not a multiple of 8!", filename, i);
+            "File {} has {} lines, which is not a multiple of 24!", filename, i);
     }
 
     if (!file.eof()) {

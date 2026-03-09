@@ -6,6 +6,7 @@
 #include "paramMesh.h"
 #include "solverTD.h"
 #include "argsParser.h"
+#include "restoreData.h"
 #include <random>
 #include <chrono>
 #include <fstream>
@@ -19,7 +20,7 @@
 inline std::unique_ptr<ArgsParser> BuildArgsParser()
 {
 	auto parser = std::make_unique<ArgsParser>();
-    parser->addArgument<int>("generate", 'g', "work mode: 0=test, 1=generate single case, 2=batch process folders", 1);
+    parser->addArgument<int>("generate", 'g', "work mode: 0=test, 1=generate single case, 2=batch process folders, 3=restore data, 5=batch seed generation from file", 1);
     parser->addArgument<std::string>("output", 'o', "output dir", "Animation");
     parser->addArgument<std::string>("input", 'i', "test input file", "tests");
     parser->addArgument<int>("type", 't', "type of generator", 0);
@@ -33,8 +34,9 @@ void generateAnimationSequence(
     double deltaTime,    // 时间步长
     std::string outputDir = "Animation",
     bool generateStartEnd = true,
-    unsigned seed = 0
-) 
+    unsigned seed = 0,
+    bool generateFrames = true  // 是否生成每一帧的obj
+)
 {
     outputDir = outputDir + "_seed" + std::to_string(seed);
     std::cout<< "Generating animation sequence in" << outputDir << "..." << std::endl;
@@ -54,7 +56,8 @@ void generateAnimationSequence(
     meshPatch2Start.writeObj(outputDir + "/patch2_start.obj");
     meshPatch2End.writeObj(outputDir + "/patch2_end.obj");
 
-    if(generateStartEnd) {
+    // 如果不需要生成每一帧，或者只生成起始结束，则直接返回
+    if(generateStartEnd || !generateFrames) {
         return;
     }
 
@@ -112,8 +115,13 @@ int main(int argc, char *argv[])
     const auto taskType = std::any_cast<int>(parser->getValueByName("type"));
 
     unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
-    // seed = 4288348963;
+    // seed = 1105483490;
     std::cout << "seed: " << seed << std::endl;
+
+    // Rational test = Rational("-215034892863375/562949953421312");
+    // double doubletest = test;
+    // Rational test2 = Rational(doubletest);
+    // std::cout << "test: " << test << ", test2: " << test2 << std::endl;
 
     // 批处理模式：扫描文件夹并生成CSV
     if (workType == 2) {
@@ -124,6 +132,112 @@ int main(int argc, char *argv[])
         genStandardData::batchProcessFolders(inputDir, taskType);
         
         std::cout << "Batch processing completed!" << std::endl;
+        return 0;
+    }
+
+    // 批量seed生成模式：从txt文件读取seed列表
+    if (workType == 5) {
+        std::cout << "=== Batch Seed Generation Mode ===" << std::endl;
+        std::cout << "Input file: " << inputDir << std::endl;
+        std::cout << "Task type: " << taskType << std::endl;
+        std::cout << "Output directory: " << outputDir << std::endl;
+        
+        // 打开输入文件
+        std::ifstream seedFile(inputDir);
+        if (!seedFile.is_open()) { 
+            std::cerr << "Error: Cannot open seed file: " << inputDir << std::endl;
+            return 1;
+        }
+        
+        std::vector<unsigned> seeds;
+        std::string line;
+        
+        // 读取所有seed
+        while (std::getline(seedFile, line)) {
+            // 跳过空行和注释行
+            if (line.empty() || line[0] == '#') continue;
+            
+            try {
+                unsigned seedValue = std::stoul(line);
+                seeds.push_back(seedValue);
+            } catch (const std::exception& e) {
+                std::cerr << "Warning: Invalid seed value: " << line << ", skipping..." << std::endl;
+            }
+        }
+        seedFile.close();
+        
+        std::cout << "Total seeds to process: " << seeds.size() << std::endl;
+        
+        // 处理每个seed
+        int successCount = 0;
+        int failCount = 0;
+        
+        for (size_t i = 0; i < seeds.size(); i++) {
+            unsigned currentSeed = seeds[i];
+            std::cout << "\n========================================" << std::endl;
+            std::cout << "Processing seed [" << (i+1) << "/" << seeds.size() << "]: " << currentSeed << std::endl;
+            std::cout << "========================================" << std::endl;
+            
+            try {
+                // 生成碰撞点
+                auto cp = generateSeparatedRandomBezierPatches(currentSeed, taskType);
+                
+                // 检查速度是否为零
+                if (cp.vel1 == Vector3r::Zero() && cp.vel2 == Vector3r::Zero()) {
+                    std::cout << "Warning: Zero velocity generated for seed " << currentSeed << ", skipping..." << std::endl;
+                    failCount++;
+                    continue;
+                }
+                
+                // 输出两个patch到obj文件
+                std::string objOutputDir = outputDir + "_seed" + std::to_string(currentSeed);
+                std::filesystem::create_directories(objOutputDir);
+                
+                static ParamMesh<TriQuadBezier> mesh(2);
+                mesh.patches[0] = cp.patch1;
+                mesh.patches[1] = cp.patch2;
+                mesh.writeObj(objOutputDir + "/two_patch.obj");
+                
+                // 测试额外碰撞
+                // auto ok = testAdditionalCollisions(cp, taskType);
+                auto ok = false;
+                
+                if (!ok) {
+                    // 生成动画序列（不生成每一帧，只生成起始和结束）
+                    generateAnimationSequence(cp, 0, 1.0, 0.01, outputDir, false, currentSeed, false);
+                    std::cout << "Success: Animation generated for seed " << currentSeed << std::endl;
+                    successCount++;
+                } else {
+                    std::cout << "Info: Additional collisions detected for seed " << currentSeed << ", skipping animation..." << std::endl;
+                    failCount++;
+                }
+                
+            } catch (const std::exception& e) {
+                std::cerr << "Error processing seed " << currentSeed << ": " << e.what() << std::endl;
+                failCount++;
+            }
+        }
+        
+        std::cout << "\n========================================" << std::endl;
+        std::cout << "Batch seed generation completed!" << std::endl;
+        std::cout << "Total processed: " << seeds.size() << std::endl;
+        std::cout << "Success: " << successCount << std::endl;
+        std::cout << "Failed/Skipped: " << failCount << std::endl;
+        std::cout << "========================================" << std::endl;
+        
+        return 0;
+    }
+
+    if(workType == 4)
+    {
+        std::cout << "=== Restore Data Mode ===" << std::endl;
+
+        auto cp = generateOriginalEE(seed);
+        
+        // 使用restoreData.h中的函数保存数据到CSV
+        saveOriginalEEToCSV(cp, outputDir, seed);
+        
+        std::cout << "Restore data completed!" << std::endl;
         return 0;
     }
     // std::mt19937_64 engine(seed);
@@ -189,7 +303,7 @@ int main(int argc, char *argv[])
     //     std::cout << "patch2[" << i << "] = " << std::fixed << std::setprecision(6) << patch2.ctrlp[i].cast<double>().transpose() << std::endl;
     // }
 
-    auto ok = testAdditionalCollisions(cp);
+    auto ok = testAdditionalCollisions(cp, taskType);
     if(!ok)
         generateAnimationSequence(cp, 0, 1.0, 0.01, outputDir, false, seed);
 }

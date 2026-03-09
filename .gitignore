@@ -35,3 +35,4 @@ output_data/
 record.md
 
 .github/copilot-instructions.md
+generator_origin.cpp

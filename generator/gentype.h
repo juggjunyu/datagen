@@ -2,7 +2,160 @@
 #include <Eigen/Dense>
 #include <rational/rational.hpp>
 #include <random>
+#include <iomanip>
 #include "collisionDetector.h"
+
+// =====================================================================
+// 精度检测工具函数：用于验证有理数在转换为 double 后是否能精确还原
+// =====================================================================
+
+/**
+ * @brief 检测单个 Rational 是否能被 double 精确表示
+ * @param r 要检测的有理数
+ * @return true 表示可以精确表示，false 表示会有精度损失
+ * 
+ * 原理：将 Rational 转为 double，再用 double 构造新的 Rational，
+ *       比较两者是否相等。如果不等，说明转换过程中发生了精度损失。
+ */
+inline bool isDoublePrecise(const Rational& r) {
+    double d = static_cast<double>(r);
+    Rational r_restored(d);
+    return r == r_restored;
+}
+
+/**
+ * @brief 检测 Vector3r 中的所有分量是否都能被 double 精确表示
+ * @param v 要检测的三维向量
+ * @return true 表示所有分量都可以精确表示
+ */
+inline bool isDoublePrecise(const Vector3r& v) {
+    return isDoublePrecise(v[0]) && isDoublePrecise(v[1]) && isDoublePrecise(v[2]);
+}
+
+/**
+ * @brief 检测 Array2r 中的所有分量是否都能被 double 精确表示
+ * @param arr 要检测的二维数组
+ * @return true 表示所有分量都可以精确表示
+ */
+inline bool isDoublePrecise(const Array2r& arr) {
+    return isDoublePrecise(arr[0]) && isDoublePrecise(arr[1]);
+}
+
+/**
+ * @brief 检测 TriQuadBezier patch 的所有控制点和速度是否都能被 double 精确表示
+ * @param patch 要检测的贝塞尔曲面
+ * @param checkVelocity 是否同时检测速度场（默认 true）
+ * @return true 表示所有数据都可以精确表示
+ */
+inline bool isDoublePrecise(const TriQuadBezier& patch, bool checkVelocity = true) {
+    // 检测所有控制点
+    for (int i = 0; i < 6; i++) {
+        if (!isDoublePrecise(patch.ctrlp[i])) {
+            return false;
+        }
+    }
+    // 检测速度场
+    if (checkVelocity) {
+        for (int i = 0; i < 6; i++) {
+            if (!isDoublePrecise(patch.velp[i])) {
+                return false;
+            }
+        }
+    }
+    return true;
+}
+
+/**
+ * @brief 打印有理数的精度诊断信息
+ * @param name 变量名称（用于输出）
+ * @param r 要诊断的有理数
+ * 
+ * 输出内容包括：原始值、分子、分母、转 double 后的值、还原后的值、是否精确
+ */
+inline void printPrecisionDiagnostic(const std::string& name, const Rational& r) {
+    double d = static_cast<double>(r);
+    Rational r_restored(d);
+    bool precise = (r == r_restored);
+    
+    std::cout << "=== Precision Diagnostic for " << name << " ===" << std::endl;
+    std::cout << "  Original Rational: " << r << std::endl;
+    std::cout << "  Numerator:   " << r.numerator_str() << std::endl;
+    std::cout << "  Denominator: " << r.denominator_str() << std::endl;
+    std::cout << "  As double:   " << std::fixed << std::setprecision(17) << d << std::endl;
+    std::cout << "  Restored:    " << r_restored << std::endl;
+    std::cout << "  Is Precise:  " << (precise ? "YES" : "NO *** PRECISION LOSS ***") << std::endl;
+    if (!precise) {
+        Rational diff = r - r_restored;
+        std::cout << "  Difference:  " << diff << std::endl;
+    }
+    std::cout << std::endl;
+}
+
+/**
+ * @brief 打印 Vector3r 的精度诊断信息
+ * @param name 变量名称
+ * @param v 要诊断的向量
+ */
+inline void printPrecisionDiagnostic(const std::string& name, const Vector3r& v) {
+    std::cout << "=== Vector3r Precision Diagnostic for " << name << " ===" << std::endl;
+    for (int i = 0; i < 3; i++) {
+        printPrecisionDiagnostic(name + "[" + std::to_string(i) + "]", v[i]);
+    }
+}
+
+/**
+ * @brief 打印 patch 的精度诊断信息，找出所有不精确的控制点/速度
+ * @param name patch 名称
+ * @param patch 要诊断的贝塞尔曲面
+ * @param checkVelocity 是否检测速度场
+ * @return 不精确的数量
+ */
+inline int printPrecisionDiagnostic(const std::string& name, const TriQuadBezier& patch, bool checkVelocity = true) {
+    int impreciseCount = 0;
+    std::cout << "=== Patch Precision Diagnostic for " << name << " ===" << std::endl;
+    
+    // 检测控制点
+    for (int i = 0; i < 6; i++) {
+        for (int j = 0; j < 3; j++) {
+            if (!isDoublePrecise(patch.ctrlp[i][j])) {
+                printPrecisionDiagnostic(name + ".ctrlp[" + std::to_string(i) + "][" + std::to_string(j) + "]", 
+                                         patch.ctrlp[i][j]);
+                impreciseCount++;
+            }
+        }
+    }
+    
+    // 检测速度场
+    if (checkVelocity) {
+        for (int i = 0; i < 6; i++) {
+            for (int j = 0; j < 3; j++) {
+                if (!isDoublePrecise(patch.velp[i][j])) {
+                    printPrecisionDiagnostic(name + ".velp[" + std::to_string(i) + "][" + std::to_string(j) + "]", 
+                                             patch.velp[i][j]);
+                    impreciseCount++;
+                }
+            }
+        }
+    }
+    
+    if (impreciseCount == 0) {
+        std::cout << "  All values are double-precise!" << std::endl;
+    } else {
+        std::cout << "  Total imprecise values: " << impreciseCount << std::endl;
+    }
+    std::cout << std::endl;
+    
+    return impreciseCount;
+}
+
+/**
+ * @brief 检测 CollisionPoint 的所有数据是否都能被 double 精确表示
+ * @param cp 要检测的碰撞点
+ * @return true 表示所有数据都可以精确表示
+ */
+inline bool isDoublePrecise(const struct CollisionPoint& cp);  // 前向声明，在 CollisionPoint 定义后实现
+
+// =====================================================================
 
 struct CollisionPoint 
 {
@@ -18,6 +171,184 @@ struct CollisionPoint
     Vector3r vel2;
 };
 
+// CollisionPoint 的精度检测函数实现（需要在 CollisionPoint 定义之后）
+inline bool isDoublePrecise(const CollisionPoint& cp) {
+    return isDoublePrecise(cp.patch1, true) && 
+           isDoublePrecise(cp.patch2, true) &&
+           isDoublePrecise(cp.uv1) &&
+           isDoublePrecise(cp.uv2) &&
+           isDoublePrecise(cp.local_uv1) &&
+           isDoublePrecise(cp.local_uv2) &&
+           isDoublePrecise(cp.normal1) &&
+           isDoublePrecise(cp.normal2) &&
+           isDoublePrecise(cp.vel1) &&
+           isDoublePrecise(cp.vel2);
+}
+
+/**
+ * @brief 打印 CollisionPoint 的精度诊断信息
+ * @param name 名称
+ * @param cp 要诊断的碰撞点
+ * @return 不精确的数量
+ */
+inline int printPrecisionDiagnostic(const std::string& name, const CollisionPoint& cp) {
+    int impreciseCount = 0;
+    std::cout << "=== CollisionPoint Precision Diagnostic for " << name << " ===" << std::endl;
+    
+    impreciseCount += printPrecisionDiagnostic(name + ".patch1", cp.patch1, true);
+    impreciseCount += printPrecisionDiagnostic(name + ".patch2", cp.patch2, true);
+    
+    // 检测 UV 参数
+    if (!isDoublePrecise(cp.uv1)) {
+        printPrecisionDiagnostic(name + ".uv1[0]", cp.uv1[0]);
+        printPrecisionDiagnostic(name + ".uv1[1]", cp.uv1[1]);
+        impreciseCount += 2;
+    }
+    if (!isDoublePrecise(cp.uv2)) {
+        printPrecisionDiagnostic(name + ".uv2[0]", cp.uv2[0]);
+        printPrecisionDiagnostic(name + ".uv2[1]", cp.uv2[1]);
+        impreciseCount += 2;
+    }
+    
+    // 检测法线
+    if (!isDoublePrecise(cp.normal1)) {
+        printPrecisionDiagnostic(name + ".normal1", cp.normal1);
+        impreciseCount += 3;
+    }
+    if (!isDoublePrecise(cp.normal2)) {
+        printPrecisionDiagnostic(name + ".normal2", cp.normal2);
+        impreciseCount += 3;
+    }
+    
+    // 检测速度
+    if (!isDoublePrecise(cp.vel1)) {
+        printPrecisionDiagnostic(name + ".vel1", cp.vel1);
+        impreciseCount += 3;
+    }
+    if (!isDoublePrecise(cp.vel2)) {
+        printPrecisionDiagnostic(name + ".vel2", cp.vel2);
+        impreciseCount += 3;
+    }
+    
+    std::cout << "Total imprecise values in CollisionPoint: " << impreciseCount << std::endl;
+    std::cout << std::endl;
+    return impreciseCount;
+}
+
+/**
+ * @brief 综合检测 CollisionPoint 在保存到 CSV 时的精度
+ * 
+ * 检测内容包括：
+ * 1. 运动 1s 后的 patch 位置 (ctrlp + velp)
+ * 2. 实际保存到 CSV 的数据 ((ctrlp + velp) * SCALE_FACTOR)
+ * 
+ * @param cp 要检测的碰撞点
+ * @param scaleFactor 缩放因子，默认 1/131072
+ * @param verbose 是否输出详细诊断信息
+ * @return true 表示所有数据都可以被 double 精确表示
+ */
+inline bool checkCollisionPointPrecision(const CollisionPoint& cp, 
+                                         const Rational& scaleFactor = Rational("1/131072"),
+                                         bool verbose = true) {
+    bool allPrecise = true;
+    
+    if (verbose) {
+        std::cout << "\n========== COLLISION POINT PRECISION CHECK ==========" << std::endl;
+    }
+    
+    // 1. 检测运动 1s 后的 patch (ctrlp + velp * 1)
+    if (verbose) {
+        std::cout << "\n[1] Checking patch after 1s movement (ctrlp + velp):" << std::endl;
+    }
+    bool precise_1s = true;
+    for (int i = 0; i < 6; i++) {
+        Vector3r pos1_after = cp.patch1.ctrlp[i] + cp.patch1.velp[i];
+        Vector3r pos2_after = cp.patch2.ctrlp[i] + cp.patch2.velp[i];
+        
+        for (int j = 0; j < 3; j++) {
+            if (!isDoublePrecise(pos1_after[j])) {
+                if (verbose) {
+                    std::cout << "  [IMPRECISE] patch1.ctrlp[" << i << "][" << j << "] + velp:" << std::endl;
+                    printPrecisionDiagnostic("patch1_after_1s[" + std::to_string(i) + "][" + std::to_string(j) + "]", pos1_after[j]);
+                }
+                precise_1s = false;
+                allPrecise = false;
+            }
+            if (!isDoublePrecise(pos2_after[j])) {
+                if (verbose) {
+                    std::cout << "  [IMPRECISE] patch2.ctrlp[" << i << "][" << j << "] + velp:" << std::endl;
+                    printPrecisionDiagnostic("patch2_after_1s[" + std::to_string(i) + "][" + std::to_string(j) + "]", pos2_after[j]);
+                }
+                precise_1s = false;
+                allPrecise = false;
+            }
+        }
+    }
+    if (verbose && precise_1s) {
+        std::cout << "  [OK] All positions after 1s are double-precise." << std::endl;
+    }
+    
+    // 2. 检测实际保存的数据 (ctrlp + velp) * scaleFactor 和 ctrlp * scaleFactor
+    if (verbose) {
+        std::cout << "\n[2] Checking saved data (with scale factor " << scaleFactor << "):" << std::endl;
+    }
+    bool precise_scaled = true;
+    for (int i = 0; i < 6; i++) {
+        // startPos = (ctrlp + velp) * scaleFactor（运动起点，即 t=1s 时刻位置经缩放）
+        Vector3r startPos1 = (cp.patch1.ctrlp[i] + cp.patch1.velp[i]) * scaleFactor;
+        Vector3r startPos2 = (cp.patch2.ctrlp[i] + cp.patch2.velp[i]) * scaleFactor;
+        // endPos = ctrlp * scaleFactor（运动终点，即 t=0 时刻位置经缩放）
+        Vector3r endPos1 = cp.patch1.ctrlp[i] * scaleFactor;
+        Vector3r endPos2 = cp.patch2.ctrlp[i] * scaleFactor;
+        
+        for (int j = 0; j < 3; j++) {
+            if (!isDoublePrecise(startPos1[j])) {
+                if (verbose) {
+                    std::cout << "  [IMPRECISE] startPos1[" << i << "][" << j << "]:" << std::endl;
+                    printPrecisionDiagnostic("startPos1", startPos1[j]);
+                }
+                precise_scaled = false;
+                allPrecise = false;
+            }
+            if (!isDoublePrecise(startPos2[j])) {
+                if (verbose) {
+                    std::cout << "  [IMPRECISE] startPos2[" << i << "][" << j << "]:" << std::endl;
+                    printPrecisionDiagnostic("startPos2", startPos2[j]);
+                }
+                precise_scaled = false;
+                allPrecise = false;
+            }
+            if (!isDoublePrecise(endPos1[j])) {
+                if (verbose) {
+                    std::cout << "  [IMPRECISE] endPos1[" << i << "][" << j << "]:" << std::endl;
+                    printPrecisionDiagnostic("endPos1", endPos1[j]);
+                }
+                precise_scaled = false;
+                allPrecise = false;
+            }
+            if (!isDoublePrecise(endPos2[j])) {
+                if (verbose) {
+                    std::cout << "  [IMPRECISE] endPos2[" << i << "][" << j << "]:" << std::endl;
+                    printPrecisionDiagnostic("endPos2", endPos2[j]);
+                }
+                precise_scaled = false;
+                allPrecise = false;
+            }
+        }
+    }
+    if (verbose && precise_scaled) {
+        std::cout << "  [OK] All saved positions are double-precise." << std::endl;
+    }
+    
+    if (verbose) {
+        std::cout << "\n========== PRECISION CHECK RESULT: " 
+                  << (allPrecise ? "ALL PRECISE" : "PRECISION LOSS DETECTED") 
+                  << " ==========" << std::endl << std::endl;
+    }
+    
+    return allPrecise;
+}
+
 Rational generateSimpleRational(auto& engine) {
     // 生成-4000到4000的整数
     std::uniform_int_distribution<int> dist(-1000<<10, 1000<<10);
@@ -25,7 +356,7 @@ Rational generateSimpleRational(auto& engine) {
 
     // 除以4转换为我们需要的格式（整数或整数加0.25, 0.5, 0.75）
     return Rational(randomValue)/Rational((1<<15));  // 相当于randomValue/4，自动约分
-}   
+}
 
 
 Vector3r randomVector3r(auto &engine)
@@ -40,14 +371,23 @@ Vector3r randomVector3r(auto &engine)
     return result;
 }
 
+Vector3r randomVector3r(auto &engine, auto &dist1, auto &dist2, auto &dist3)
+{
+    Vector3r result = Vector3r(dist1(engine), dist2(engine), dist3(engine));
+    for(int i = 0; i < 3; i++) 
+        result[i].canonicalize();
+    return result;
+}
+
 TriQuadBezier generateRandomPatch(auto &engine, auto &dist1, auto &dist2, auto &dist3) 
 {
     std::array<Vector3r, 6> patch;
     for(int i = 0; i < 6; i++) 
-        // patch[i] = randomVector3r(engine, dist1, dist2, dist3);
-        patch[i] = randomVector3r(engine);
+        patch[i] = randomVector3r(engine, dist1, dist2, dist3);
+        // patch[i] = randomVector3r(engine);
     return TriQuadBezier(patch);
 }
+
 
 TriParamBound generateFixedParamBound();
 
@@ -745,6 +1085,223 @@ namespace vertexedge
         }
         catch (...) {
             std::cerr << "Unknown exception in vertexedge::genColVel" << std::endl;
+            return {Vector3r(0, 0, 1), Vector3r(0, 0, -1)};
+        }
+    }
+};
+
+// =====================================================================
+// vertexvertex 命名空间：专门用于顶点-顶点(VV)碰撞的速度生成
+// 核心思想：同时在两个顶点周围采样，计算两侧的平均展开方向差作为分离方向
+// =====================================================================
+namespace vertexvertex
+{
+    /**
+     * @brief 识别UV坐标对应的顶点类型
+     * @param uv 参数坐标
+     * @return 0: (0,0), 1: (1,0), 2: (0,1), -1: 非顶点
+     */
+    inline int identifyVertex(const Array2r& uv) {
+        const Rational epsilon = Rational("1/1000000");
+        if (uv[0] < epsilon && uv[1] < epsilon) return 0;           // (0,0)
+        if (std::abs(uv[0] - Rational(1)) < epsilon && uv[1] < epsilon) return 1;  // (1,0)
+        if (uv[0] < epsilon && std::abs(uv[1] - Rational(1)) < epsilon) return 2;  // (0,1)
+        return -1; // 不是顶点
+    }
+
+    /**
+     * @brief 获取顶点周围的采样偏移量
+     * @param vertex 顶点类型 (0, 1, 2)
+     * @param safeOffset 安全偏移量
+     * @return 采样点坐标列表
+     */
+    inline std::vector<Array2r> getSampleOffsets(int vertex, const Rational& safeOffset) {
+        std::vector<Array2r> offsets;
+        switch (vertex) {
+            case 0: // (0,0)
+                offsets = {
+                    Array2r(safeOffset, Rational(0)),
+                    Array2r(Rational(0), safeOffset),
+                    Array2r(safeOffset, safeOffset),
+                    Array2r(safeOffset/Rational(2), safeOffset/Rational(2)),
+                    Array2r(safeOffset*Rational(2), safeOffset/Rational(2))
+                };
+                break;
+            case 1: // (1,0) 
+                offsets = {
+                    Array2r(Rational(1)-safeOffset, Rational(0)),
+                    Array2r(Rational(1), safeOffset),
+                    Array2r(Rational(1)-safeOffset, safeOffset),
+                    Array2r(Rational(1)-safeOffset/Rational(2), safeOffset/Rational(2)),
+                    Array2r(Rational(1)-safeOffset*Rational(2), safeOffset/Rational(2))
+                };
+                break;
+            case 2: // (0,1)
+                offsets = {
+                    Array2r(Rational(0), Rational(1)-safeOffset),
+                    Array2r(safeOffset, Rational(1)),
+                    Array2r(safeOffset, Rational(1)-safeOffset),
+                    Array2r(safeOffset/Rational(2), Rational(1)-safeOffset/Rational(2)),
+                    Array2r(safeOffset/Rational(2), Rational(1)-safeOffset*Rational(2))
+                };
+                break;
+            default:
+                // 非顶点情况，返回空
+                break;
+        }
+        return offsets;
+    }
+
+    /**
+     * @brief 计算顶点周围采样点的平均方向
+     * @param patch 贝塞尔曲面
+     * @param uv 顶点参数坐标
+     * @param vertexPoint 顶点3D位置
+     * @param vertex 顶点类型
+     * @return 平均方向向量（未归一化）
+     */
+    inline Vector3r computeAverageDirection(
+        const TriQuadBezier& patch,
+        const Array2r& uv,
+        const Vector3r& vertexPoint,
+        int vertex
+    ) {
+        Rational safeOffset = Rational(1) / Rational(50);
+        std::vector<Array2r> sampleOffsets = getSampleOffsets(vertex, safeOffset);
+        
+        Vector3r avgDir = Vector3r::Zero();
+        int validSamples = 0;
+        
+        for (const auto& offset : sampleOffsets) {
+            try {
+                Vector3r samplePoint = patch.evaluatePatchPoint(offset);
+                Vector3r dir = samplePoint - vertexPoint;
+                
+                if (dir.norm() != Rational(0)) {
+                    dir = dir / dir.norm();
+                    avgDir = avgDir + dir;
+                    validSamples++;
+                }
+            } catch (...) {
+                continue;
+            }
+        }
+        
+        if (validSamples > 0) {
+            avgDir = avgDir / Rational(validSamples);
+        }
+        
+        return avgDir;
+    }
+
+    /**
+     * @brief 为顶点-顶点碰撞生成碰撞速度
+     * 
+     * 核心算法：
+     * 1. 在两个顶点周围分别采样，计算各自的平均展开方向
+     * 2. 分离方向 = avgDir2 - avgDir1（两侧展开方向的差异）
+     * 3. 在分离方向的相反半空间生成两个速度
+     * 
+     * @param engine 随机数引擎
+     * @param patch1 第一个顶点所在曲面
+     * @param patch2 第二个顶点所在曲面
+     * @param uv1 第一个顶点的参数坐标
+     * @param uv2 第二个顶点的参数坐标
+     * @return {vel1, vel2} 两个碰撞速度
+     */
+    std::pair<Vector3r, Vector3r> genColVel(
+        auto& engine,
+        const TriQuadBezier& patch1,  // 第一个顶点所在曲面
+        const TriQuadBezier& patch2,  // 第二个顶点所在曲面
+        const Array2r& uv1,           // 第一个顶点参数坐标
+        const Array2r& uv2            // 第二个顶点参数坐标
+    ) 
+    {
+        try {
+            std::uniform_real_distribution<float> speedDist(0.5, 5.0);
+            
+            // 1. 识别两个顶点类型
+            int vertex1 = identifyVertex(uv1);
+            int vertex2 = identifyVertex(uv2);
+            
+            if (vertex1 == -1 || vertex2 == -1) {
+                std::cerr << "Error: not vertex points in vertexvertex::genColVel" << std::endl;
+                std::cerr << "  uv1: (" << uv1[0] << ", " << uv1[1] << "), vertex1=" << vertex1 << std::endl;
+                std::cerr << "  uv2: (" << uv2[0] << ", " << uv2[1] << "), vertex2=" << vertex2 << std::endl;
+                return {Vector3r(0, 0, 1), Vector3r(0, 0, -1)};
+            }
+            
+            // 2. 获取两个顶点的3D位置
+            Vector3r point1 = patch1.evaluatePatchPoint(uv1);
+            Vector3r point2 = patch2.evaluatePatchPoint(uv2);
+            
+            // 3. 在两个顶点周围分别采样，计算平均方向
+            Vector3r avgDir1 = computeAverageDirection(patch1, uv1, point1, vertex1);
+            Vector3r avgDir2 = computeAverageDirection(patch2, uv2, point2, vertex2);
+            
+            // 4. 计算分离方向 = patch2的展开方向 - patch1的展开方向
+            // 物理意义：从patch1"指向"patch2的方向
+            Vector3r separationDir = avgDir2 - avgDir1;
+            
+            // 5. 处理分离方向为零的情况（两个顶点展开方向相同）
+            if (separationDir.squaredNorm() < Rational("1/10000")) {
+                // 备选方案：使用两个法线的平均
+                Vector3r n1 = patch1.evaluateNormal(uv1);
+                Vector3r n2 = patch2.evaluateNormal(uv2);
+                separationDir = n1 + n2;
+                
+                if (separationDir.squaredNorm() < Rational("1/10000")) {
+                    // 如果法线和也接近零（法线几乎相反），使用n1
+                    separationDir = n1;
+                    
+                    if (separationDir.squaredNorm() < Rational("1/10000")) {
+                        // 最后备选：使用默认方向
+                        separationDir = Vector3r(Rational(0), Rational(0), Rational(1));
+                    }
+                }
+            }
+            
+            // 归一化分离方向
+            separationDir = separationDir / separationDir.norm();
+            
+            // 6. 生成速度大小
+            Rational speed1 = speedDist(engine);
+            Rational speed2 = speedDist(engine);
+            
+            // 7. 在相反半空间生成速度方向
+            // vel1 在 -separationDir 半空间（patch1侧）
+            // vel2 在 +separationDir 半空间（patch2侧）
+            Vector3r dir1 = generateRandomDirectionInHalfSpace(engine, -separationDir);
+            Vector3r dir2 = generateRandomDirectionInHalfSpace(engine, separationDir);
+            
+            Vector3r vel1 = speed1 * dir1;
+            Vector3r vel2 = speed2 * dir2;
+            
+            // 8. 验证约束：(vel2 - vel1) · separationDir > 0
+            Rational dotProduct = (vel2 - vel1).dot(separationDir);
+            
+            if (dotProduct <= Rational(0)) {
+                // 如果不满足条件，直接使用确定性方向
+                vel1 = speed1 * (-separationDir);
+                vel2 = speed2 * separationDir;
+                dotProduct = (vel2 - vel1).dot(separationDir);
+            }
+            
+            std::cout << "Vertex-Vertex collision velocity generated." << std::endl;
+            std::cout << "  Vertex1 type: " << vertex1 << ", Vertex2 type: " << vertex2 << std::endl;
+            std::cout << "  avgDir1: " << avgDir1.transpose() << std::endl;
+            std::cout << "  avgDir2: " << avgDir2.transpose() << std::endl;
+            std::cout << "  Separation direction: " << separationDir.transpose() << std::endl;
+            std::cout << "  Relative velocity dot separation: " << dotProduct << std::endl;
+            
+            return {vel1, vel2};
+        }
+        catch (const std::exception& e) {
+            std::cerr << "Exception in vertexvertex::genColVel: " << e.what() << std::endl;
+            return {Vector3r(0, 0, 1), Vector3r(0, 0, -1)};
+        }
+        catch (...) {
+            std::cerr << "Unknown exception in vertexvertex::genColVel" << std::endl;
             return {Vector3r(0, 0, 1), Vector3r(0, 0, -1)};
         }
     }

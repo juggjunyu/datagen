@@ -23,7 +23,7 @@ void rotatePatchToAlign(TriQuadBezier& patch, const Array2r& uv, const Vector3r&
 // 验证是否碰撞
 bool verifyCollision(const CollisionPoint& cp, const float &eps);
 // 额外碰撞检测
-bool testAdditionalCollisions(const CollisionPoint& cp);
+bool testAdditionalCollisions(const CollisionPoint& cp, int taskType = -1);
 // 生成一个随机的patch
 // TriQuadBezier generateRandomPatch(auto &engine, auto &dist1, auto &dist2, auto &dist3);
 // 生成一个穿过点的patch
@@ -44,7 +44,62 @@ std::array<Vector3r, 6> generateVelocityField(
     auto& engine,
     const Vector3r& collisionVel,
     const Array2r& uv,
-    const std::array<Vector3r, 6>& controlPoints);
+    const std::array<Vector3r, 6>& controlPoints)
+{
+    std::uniform_real_distribution<float> dist(-5.0, 5.0);
+    std::array<Vector3r, 6> velocities;
+    
+    // 随机生成前5个控制点的速度
+    for(int i = 0; i < 5; i++) 
+        velocities[i] = Vector3r(dist(engine), dist(engine), dist(engine));
+
+    BaryCoord coord(uv);
+    Rational w = coord.w;
+    Rational u = coord.u;
+    Rational v = coord.v;
+    
+    // 计算基函数系数
+    Rational coeffs[6] = {
+        w*w,             // 控制点0的系数
+        Rational(2)*w*u, // 控制点1的系数
+        u*u,             // 控制点2的系数
+        Rational(2)*w*v, // 控制点3的系数
+        Rational(2)*u*v, // 控制点4的系数
+        v*v              // 控制点5的系数
+    };
+    
+    // 找到系数绝对值最大的控制点作为求解控制点
+    int maxIndex = 0;
+    Rational maxCoeff = std::abs(coeffs[0]);
+    
+    for (int i = 1; i < 6; i++) {
+        if (std::abs(coeffs[i]) > maxCoeff) {
+            maxIndex = i;
+            maxCoeff = std::abs(coeffs[i]);
+        }
+    }
+    
+    // 如果最大系数仍然太小，直接设置最后一个控制点的速度为碰撞速度
+    const Rational epsilon = Rational(1)/Rational(10000);
+    if (maxCoeff < epsilon) {
+        velocities[5] = collisionVel;
+        return velocities;
+    }
+    
+    // 计算选中的控制点速度
+    Vector3r sumOtherTerms = Vector3r::Zero();
+    for (int i = 0; i < 6; i++) {
+        if (i != maxIndex) {
+            sumOtherTerms = sumOtherTerms + coeffs[i] * velocities[i];
+        }
+    }
+    
+    // 求解选中的控制点速度
+    velocities[maxIndex] = (collisionVel - sumOtherTerms) / coeffs[maxIndex];
+    
+    return velocities;
+}
+
 // 面面碰撞穿透检测
 bool penetrateCheck(const CollisionPoint& cp, bool ok);
 // 通过采样确定两个patch的相对位置方向
@@ -73,7 +128,20 @@ CollisionPoint generateNearMissVF(unsigned seed, Rational gap = Rational("1/1310
 CollisionPoint generateNearMissVE(unsigned seed, Rational gap = Rational("1/131072"));
 // Vertex-Vertex擦肩而过
 CollisionPoint generateNearMissVV(unsigned seed, Rational gap = Rational("1/131072"));
-//产生随机2面碰撞（面面及其他）
+// Face-Face恰好碰到（Near Hit）
+CollisionPoint generateNearHitFF(unsigned seed);
+
+CollisionPoint generateNearHitEF(unsigned seed);
+
+CollisionPoint generateNearHitEE(unsigned seed);
+
+CollisionPoint generateNearHitVF(unsigned seed);
+
+CollisionPoint generateNearHitVE(unsigned seed);
+
+CollisionPoint generateNearHitVV(unsigned seed);
+
+// 生成退化情况//产生随机2面碰撞（面面及其他）
 CollisionPoint generateSeparatedRandomBezierPatches(unsigned seed, int tasktype);
 
 
