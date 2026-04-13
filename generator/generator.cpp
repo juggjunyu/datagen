@@ -3081,7 +3081,24 @@ CollisionPoint generateSeparatedRandomBezierPatches(unsigned seed, int tasktype)
     // end = std::chrono::high_resolution_clock::now();
     // elapsed = end - start;
     // std::cout << "Time taken for collision detection(N): " << elapsed.count() << " seconds" << std::endl;
-    
+
+    // 检测所有控制点和速度是否能被浮点数精确表示
+    auto checkPatchPrecise = [](const TriQuadBezier& patch, const std::string& name) -> bool {
+        for (int i = 0; i < 6; i++) {
+            if (!isPreciselyRepresent(patch.ctrlp[i])) {
+                std::cout << name << " ctrlp[" << i << "] 无法被浮点数精确表示，丢弃该样本" << std::endl;
+                return false;
+            }
+            if (!isPreciselyRepresent(patch.velp[i])) {
+                std::cout << name << " velp[" << i << "] 无法被浮点数精确表示，丢弃该样本" << std::endl;
+                return false;
+            }
+        }
+        return true;
+    };
+    if (!checkPatchPrecise(localPatch1, "localPatch1") || !checkPatchPrecise(localPatch2, "localPatch2"))
+        return CollisionPoint();
+
     return cp;
     // return {TriQuadBezier(patch1), TriQuadBezier(patch2)};
 }
