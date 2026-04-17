@@ -16,12 +16,12 @@ from concurrent.futures import ProcessPoolExecutor, as_completed
 from pathlib import Path
 
 # ========== 配置区域 ==========
-EXE_PATH = "E:\\research\\datagen\\build\\windows\\x64\\debug\\generator2.exe"  # 二进制文件路径
-OUTPUT_DIR_NAME = "Face-Face-NearHit"  # 输出目录名称（可包含相对路径）
-TASK_TYPE = 12  # 任务类型，0-12，None 表示不指定
-TARGET_COUNT = 3  # 目标数据组数
-WORKER_COUNT = 3  # 并行进程数，None 表示自动设置为 cpu_count - 2
-FINAL_OUTPUT_DIR = "output_data_Face-Face-NearHit"  # 最终输出目录
+EXE_PATH = "E:\\research\\datagen\\build\\windows\\x64\\debug\\generator.exe"  # 二进制文件路径
+OUTPUT_DIR_NAME = "Test-Face-Face"  # 输出目录名称（可包含相对路径）
+TASK_TYPE = 0  # 任务类型，0-12，None 表示不指定
+TARGET_COUNT = 100  # 目标数据组数
+WORKER_COUNT = 16  # 并行进程数，None 表示自动设置为 cpu_count - 2
+FINAL_OUTPUT_DIR = "test_Face-Face"  # 最终输出目录 output_data_Face-Face-NearHit
 TIMEOUT = 300  # 子进程超时时间（秒）
 # ==============================
 
@@ -91,7 +91,10 @@ def run_generator_task(task_id, exe_path, output_dir_name, task_type=None, timeo
     reason = None
     if not success:
         if not has_success_marker:
-            reason = "missing_success_marker"
+            if "无法被浮点数精确表示" in stdout:
+                reason = "precise_filtered"
+            else:
+                reason = "missing_success_marker"
         elif not seed:
             reason = "missing_seed"
         else:
@@ -177,6 +180,7 @@ def main():
     # 初始化统计
     success_count = 0
     total_attempts = 0
+    precise_filtered_count = 0
     start_time = time.time()
     
     executor = ProcessPoolExecutor(max_workers=worker_count)
@@ -226,6 +230,8 @@ def main():
                         print(f"[Task {task_num}] 已生成 seed {seed} 数据但移动失败，结果仍位于: {fallback}")
                 else:
                     reason = result.get("reason") if isinstance(result, dict) else "unknown"
+                    if reason == "precise_filtered":
+                        precise_filtered_count += 1
                     stdout_snippet = (result.get("stdout") or "")[:200] if isinstance(result, dict) else ""
                     stderr_snippet = (result.get("stderr") or "")[:200] if isinstance(result, dict) else ""
                     print(f"[Task {task_num}] 失败，原因: {reason}")
@@ -257,12 +263,14 @@ def main():
     elapsed_time = time.time() - start_time
     success_rate = (success_count / total_attempts * 100) if total_attempts else 0
     avg_time = (elapsed_time / success_count) if success_count else 0
+    precise_filter_rate = (precise_filtered_count / total_attempts * 100) if total_attempts else 0
     print("\n" + "=" * 60)
     print("生成完成!")
     print("=" * 60)
     print(f"成功生成: {success_count} 组")
     print(f"总尝试次数: {total_attempts}")
     print(f"成功率: {success_rate:.2f}%")
+    print(f"精确性筛掉次数: {precise_filtered_count} 次 ({precise_filter_rate:.2f}%)")
     print(f"总耗时: {elapsed_time:.2f} 秒")
     print(f"平均每组耗时: {avg_time:.2f} 秒")
     print(f"输出目录: {FINAL_OUTPUT_DIR}")

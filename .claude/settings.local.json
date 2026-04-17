@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(cp -R /tmp/Research-Paper-Writing-Skills/research-paper-writing \"$HOME/.claude/skills/\")",
+      "Read(//e/research/datagen/$HOME/.claude/skills/**)",
+      "Bash(where claude:*)",
+      "Read(//c/Users/juggjywang/**)",
+      "mcp__overleaf__list_files"
+    ]
+  }
+}
