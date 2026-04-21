@@ -1,0 +1,128 @@
+\documentclass{article}
+\usepackage[utf8]{inputenc}
+\usepackage[margin=1in]{geometry}
+\usepackage{xcolor}
+\usepackage{hyperref}
+\usepackage{enumitem}
+\usepackage{booktabs}
+
+\begin{document}
+
+\begin{center}
+    {\Large \textbf{Revision Letter}} \\[1.5em]
+    \textbf{Original Submission ID:} papers\_1556 \\[0.5em]
+    \textbf{Title:} Floating-Point Robustness in Parametric Surface Continuous Collision Detection:\\ From Algorithm to Benchmarking
+\end{center}
+
+\vspace{1em}
+\noindent Dear Reviewers and Program Committee,
+
+\vspace{0.5em}
+\noindent Thank you for the detailed feedback and the opportunity to revise our manuscript. We have addressed the committee's required condition and fulfilled all promises made in our rebuttal. Below we summarize the changes by topic; each item is tagged with the reviewer(s) it addresses. All new or revised text is highlighted in {\color{blue}blue} in the manuscript.
+
+%% ============================================================
+\section*{1\quad Committee Required Condition: Trimming Curves}
+%% ============================================================
+
+We have added a dedicated paragraph in Section~7 (Conclusions) discussing how our framework extends to trimmed and multi-patch CAD models (Committee, R2):
+\begin{itemize}[nosep]
+    \item Standard NURBS surfaces can be losslessly converted into tensor-product B\'{e}zier patches, which our method natively supports.
+    \item Simple trims (domain clipping) are handled by restricting the parameter query range.
+    \item Complex trims do not affect 3D evaluation; the challenge lies in the 2D parameter domain. TDIBM's recursive subdivision is naturally extendable, which we identify as future work.
+    \item Multi-patch models are processed patch-by-patch; self-collision across patches is noted as a non-trivial future direction.
+\end{itemize}
+
+%% ============================================================
+\section*{2\quad Content and Structure}
+%% ============================================================
+
+\paragraph{Expanded floating-point representability (Section~5.4).}
+(R1, R4) We merged former Appendix~F into the main text, transforming a brief paragraph into a full subsection. It now covers: a formal definition of dyadic rationals ($p/2^k$, $|p|<2^{53}$); the core challenge of preserving this property through constraint solving; our Cramer's-rule enumeration strategy; and detailed descriptions of how control points, UV coordinates, contact normals, and local patch extraction each maintain exact representability. A verification paragraph reports a 0\% discard rate in the round-trip test.
+
+\paragraph{Assumptions and Guarantees box.}
+(R2) We added a prominently framed box in Section~4.4 stating three assumptions (linear control-point motion, convex-hull containment via the variation-diminishing property, IEEE~754 double precision), the guarantee (TDIBM-E eliminates all false negatives), and explicit scope limitations (manifold contacts, self-intersecting surfaces, and trimmed parameter domains are not covered).
+
+\paragraph{Terminology unification.}
+(R1) We replaced all inconsistent uses of ``floating-point reliability,'' ``floating-point-resilient,'' and ``error-resilient'' with a uniform \textbf{``floating-point robustness''} (noun) and \textbf{``robust''} (adjective) across the Abstract, Introduction, and Evaluation.
+
+\paragraph{Non-point contacts and limitations.}
+(R1) We expanded the limitations paragraph in Section~7 to clarify that TDIBM itself handles manifold contacts, but the inverse dataset construction only supports isolated contact points. Generating exact curve/area contacts requires fundamentally different algebraic design, noted as future work.
+
+%% ============================================================
+\section*{3\quad Experiments and Visualization}
+%% ============================================================
+
+\paragraph{Result visualization (new Fig.~8).}
+(R1) We added a two-panel bar chart: (a)~false negative rates across six collision scenarios for four methods, and (b)~average runtime on a log scale for six method variants. These make the key finding---TDIBM-E eliminates all false negatives with moderate overhead---immediately visible.
+
+\paragraph{TDIBM-H multi-tolerance comparison.}
+(R4) The updated results table now includes three pull-apart factors ($10^{-16}$, $10^{-12}$, $10^{-8}$), demonstrating the trade-off between safety and efficiency and showing that no single heuristic value is universally optimal.
+
+\paragraph{Curvature distribution figure (Fig.~7).}
+(R4) Regenerated with enlarged statistics text (repositioned to top-right) and unified styling using the Linux Libertine font to match the paper body.
+
+%% ============================================================
+\section*{4\quad Line-by-Line Clarifications}
+%% ============================================================
+
+\noindent The following specific points raised by R4 have been addressed:
+\begin{itemize}[nosep]
+    \item \textbf{``Parametric surfaces'' scope} (Line~66): Introduction now states we focus on tensor-product and triangular B\'{e}zier patches.
+    \item \textbf{``Infinitely many solutions''} (Line~166): Revised to ``may admit infinitely many solutions due to non-isolated contacts.''
+    \item \textbf{Convex hull property} (Line~186): Formally stated in the Assumptions/Guarantees box with reference to the variation-diminishing property.
+    \item \textbf{Convergence criterion} (Line~211): Added parenthetical: ``i.e., all parametric intervals refined below a user-specified threshold (e.g., $10^{-4}$).''
+    \item \textbf{``Assigning compatible values''} (Line~576): Added forward reference to Section~5.4, which now contains the full explanation.
+\end{itemize}
+
+%% ============================================================
+\section*{5\quad Formatting and Figures}
+%% ============================================================
+
+\begin{itemize}[nosep]
+    \item \textbf{Pipeline figure} (R2): The generation pipeline operates entirely in exact rational arithmetic; the only floating-point involvement is the final round-trip verification described in Section~5.4. We believe the current figure together with the expanded text sufficiently conveys this distinction.
+    \item \textbf{Font embedding} (R4): We are verifying that all fonts are embedded as subsets in the final PDF.
+\end{itemize}
+
+%% ============================================================
+\section*{6\quad Remaining Items}
+%% ============================================================
+
+\noindent The following items are in progress and will be completed for the final version:
+\begin{itemize}[nosep]
+    \item Merging Appendix~A (Step~I error accumulation) and Appendix~B (robust implementation) into the main text (R3, R4).
+    \item Worst-case runtime percentile analysis with box plots (R2).
+\end{itemize}
+
+%% ============================================================
+\section*{Summary of Changes}
+%% ============================================================
+
+\vspace{0.3em}
+\begin{center}
+\small
+\begin{tabular}{@{}p{6.2cm}lp{3.2cm}@{}}
+\toprule
+\textbf{Change} & \textbf{Source} & \textbf{Location} \\
+\midrule
+Trimming curves discussion          & Committee, R2 & Section 7 \\
+Section 5.4 expansion (Appendix F)  & R1, R4        & Section 5.4 \\
+Assumptions / Guarantees box        & R2            & Section 4.4 \\
+Terminology unification             & R1            & Abstract, Sec.~1, 6 \\
+Non-point contacts discussion       & R1            & Section 7 \\
+Result visualization (Fig.~8)       & R1            & Section 6 / Figures \\
+Multi-tolerance TDIBM-H table       & R4            & Section 6 \\
+Curvature figure restyled (Fig.~7)  & R4            & Figure 7 \\
+Line-by-line clarifications         & R4            & Sections 1--5 \\
+Pipeline diagram rationale          & R2            & This letter \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\vspace{1.5em}
+\noindent We believe these revisions thoroughly address all reviewer concerns and committee conditions. We are grateful for the detailed feedback, which has significantly improved the clarity and completeness of our manuscript.
+
+\vspace{2em}
+\noindent Sincerely,\\
+The Authors
+
+\end{document}

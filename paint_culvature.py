@@ -9,6 +9,22 @@ paint_culvature.py - 绘制RMS曲率分布柱状图
 import sys
 import numpy as np
 import matplotlib.pyplot as plt
+import matplotlib.font_manager as fm
+import os
+
+# ── Load Linux Libertine font ───────────────────────────────────────────────
+_font_dir = r'E:\research\datagen\Libertine Font'
+if os.path.isdir(_font_dir):
+    for _f in os.listdir(_font_dir):
+        if _f.endswith('.otf') and not _f.startswith('._'):
+            fm.fontManager.addfont(os.path.join(_font_dir, _f))
+_libertine_name = None
+for f in fm.fontManager.ttflist:
+    if 'Libertine' in f.name and 'LinLibertine_RZ' in (f.fname or ''):
+        _libertine_name = f.name
+        break
+if _libertine_name is None:
+    _libertine_name = 'Linux Libertine'
 
 
 def read_curvature_data(filepath):
@@ -62,7 +78,7 @@ def plot_curvature_distribution(curvatures, output_path=None, trim_percent=1.0):
     绘制曲率分布柱状图
     X轴使用对数坐标
     显示统计信息
-    
+
     参数:
         curvatures: 曲率数据数组
         output_path: 输出图像路径（可选）
@@ -71,11 +87,11 @@ def plot_curvature_distribution(curvatures, output_path=None, trim_percent=1.0):
     # 过滤掉非正数（对数坐标需要正数）
     curvatures = curvatures[curvatures > 0]
     original_count = len(curvatures)
-    
+
     # 去除前后 trim_percent% 的异常值
     if trim_percent > 0:
         curvatures = trim_outliers(curvatures, trim_percent)
-    
+
     # 计算统计信息
     count = len(curvatures)
     min_val = np.min(curvatures)
@@ -83,74 +99,77 @@ def plot_curvature_distribution(curvatures, output_path=None, trim_percent=1.0):
     avg_val = np.mean(curvatures)
     mid_val = np.median(curvatures)
     sigma_val = np.std(curvatures)
-    
+
+    # ── Style: match plot_results.py ──
+    plt.rcParams.update({
+        'font.family': 'serif',
+        'font.serif': [_libertine_name, 'Linux Libertine', 'DejaVu Serif'],
+        'font.size': 11,
+        'axes.labelsize': 13,
+        'legend.fontsize': 11,
+        'xtick.labelsize': 11,
+        'ytick.labelsize': 11,
+        'figure.dpi': 300,
+        'savefig.bbox': 'tight',
+        'savefig.pad_inches': 0.05,
+    })
+
     # 创建图形
-    fig, ax = plt.subplots(figsize=(12, 7))
-    
+    fig, ax = plt.subplots(figsize=(5.5, 3.2))
+
     # 使用对数空间的bins
     log_min = np.log10(min_val)
     log_max = np.log10(max_val)
     bins = np.logspace(log_min, log_max, 40)
-    
-    # 绘制柱状图
-    n, bins_out, patches = ax.hist(curvatures, bins=bins, 
-                                    color='skyblue', 
-                                    edgecolor='steelblue',
+
+    # 绘制柱状图 — 与 plot_results.py 配色一致
+    n, bins_out, patches = ax.hist(curvatures, bins=bins,
+                                    color='#4DBEEE',
+                                    edgecolor='black',
+                                    linewidth=0.5,
                                     alpha=0.9,
-                                    label='Frequency Distribution')
-    
+                                    zorder=3)
+
     # 设置X轴为对数坐标
     ax.set_xscale('log')
-    
+
     # 设置标签
-    ax.set_xlabel('value', fontsize=12)
-    ax.set_ylabel('num', fontsize=12)
-    
-    # 标题显示是否去除了异常值
-    title = 'Curvature Distribution (X-axis Log Scale)'
-    # if trim_percent > 0:
-    #     title += f'\n(Trimmed: removed top/bottom {trim_percent}%)'
-    ax.set_title(title, fontsize=14)
-    
-    # 添加图例
-    ax.legend(loc='upper right')
-    
-    # 添加统计信息文本框
-    stats_text = (f'original: {original_count}\n'
-                  f'numbers: {count}\n'
-                  f'min: {min_val:.4g}\n'
-                  f'max: {max_val:.4g}\n'
-                  f'avg: {avg_val:.4g}\n'
-                  f'mid: {mid_val:.4g}\n'
-                  f'sigma: {sigma_val:.4g}')
-    
+    ax.set_xlabel('RMS Curvature')
+    ax.set_ylabel('Count')
+
+    # 添加统计信息文本框 — 放大字体
+    stats_text = (f'Total: {original_count}\n'
+                  f'Shown: {count}\n'
+                  f'Min: {min_val:.4g}\n'
+                  f'Max: {max_val:.4g}\n'
+                  f'Mean: {avg_val:.4g}\n'
+                  f'Median: {mid_val:.4g}\n'
+                  f'Std: {sigma_val:.4g}')
+
     # 文本框样式
-    props = dict(boxstyle='round', facecolor='white', alpha=0.8, edgecolor='gray')
-    ax.text(0.02, 0.98, stats_text, transform=ax.transAxes, fontsize=10,
-            verticalalignment='top', bbox=props, family='monospace')
-    
-    # 设置网格
-    ax.grid(True, alpha=0.3, which='both')
-    
+    props = dict(boxstyle='round', facecolor='white', alpha=0.9, edgecolor='gray')
+    ax.text(0.97, 0.97, stats_text, transform=ax.transAxes, fontsize=12,
+            verticalalignment='top', horizontalalignment='right', bbox=props,
+            family=_libertine_name)
+
+    # 设置网格 — 与 plot_results.py 一致
+    ax.grid(True, alpha=0.3, which='both', zorder=0)
+    ax.set_axisbelow(True)
+
     # 调整布局
     plt.tight_layout()
     
     # 保存或显示
     if output_path:
-        # 保存PNG格式
-        plt.savefig(output_path, dpi=150, bbox_inches='tight')
-        print(f"图像已保存到: {output_path}")
-        
-        # 同时保存PDF格式（矢量图，适合论文）
+        # 保存PDF格式（矢量图，适合论文）
         pdf_path = output_path.rsplit('.', 1)[0] + '.pdf'
         plt.savefig(pdf_path, format='pdf', bbox_inches='tight')
         print(f"PDF已保存到: {pdf_path}")
-        
-        # 同时保存EPS格式（矢量图，适合LaTeX）
-        eps_path = output_path.rsplit('.', 1)[0] + '.eps'
-        plt.savefig(eps_path, format='eps', bbox_inches='tight')
-        print(f"EPS已保存到: {eps_path}")
-    
+
+        # 也保存PNG格式
+        plt.savefig(output_path, dpi=300, bbox_inches='tight')
+        print(f"图像已保存到: {output_path}")
+
     plt.show()
     
     # 打印统计信息

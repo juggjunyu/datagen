@@ -37,3 +37,4 @@ record.md
 .github/copilot-instructions.md
 generator_origin.cpp
 *.bak
+*.otf

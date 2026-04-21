@@ -8,14 +8,10 @@
 
 ## 🔴 硬性接收条件（Committee Required）
 
-- [ ] **讨论 Trimming Curves 的处理**（Committee 唯一明确条件）
-  - **修改位置**：`Conclusions.tex`，在现有 limitation 段落后新增一段
-  - **写什么**：
-    - Standard NURBS → 可无损转为 tensor-product Bézier patches，本文方法原生支持
-    - Simple trims（domain clipping）→ 限制参数查询范围即可支持
-    - Complex trims → trimming 不影响 3D 求值，难点在参数域裁剪；TDIBM 的递归细分策略可自然扩展（future work）
-    - Multi-patch models → 逐 patch 处理 + domain clipping 绕过接缝；self-collision 是 non-trivial future direction
-  - **注意**：`Related-Work.tex` 中也应补充一句提到 trimmed NURBS 在 CAD 中的普遍性
+- [x] **讨论 Trimming Curves 的处理**（Committee 唯一明确条件）✅ 已完成
+  - **修改位置**：`Conclusions.tex` L13-14
+  - **内容**：Standard NURBS 转换、simple trims、complex trims、multi-patch models 均已覆盖
+  - ~~**注意**：`Related-Work.tex` 中也应补充一句提到 trimmed NURBS 在 CAD 中的普遍性~~ → 不需要，Conclusions 已充分讨论
 
 ---
 
@@ -30,27 +26,24 @@
   - **操作**：将 Appendix A（Step I 误差累积）和 Appendix B（robust implementation with `nextafter`）的核心内容合入 `Error-Bound-Analysis.tex` 或 `Error-Bound-Computation.tex`
   - **理由**：R4 说 "appendices are integral to the paper's main theoretical contributions"，journal track 无页数限制
 
-- [ ] **添加 "Assumptions / Guarantees" box** (R2)
-  - **修改位置**：`Error-Bound-Conclusion.tex`（Section "A Short Summary" 附近），或在 `Error-Bound-Analysis.tex` 开头
-  - **格式**：用 `framed` 环境包裹，标题 "Assumptions and Guarantees"
-  - **内容**：
-    - 假设：控制点线性运动、曲面在控制点凸包内（variation-diminishing）、IEEE 754 double
-    - 保证：在上述假设下 TDIBM-E 无 FN（可能有 FP）
-    - 不保证：manifold contact、自相交、trimmed 参数域
+- [x] **添加 "Assumptions / Guarantees" box** (R2) ✅ 已完成
+  - **修改位置**：`Error-Bound-Conclusion.tex`，"A Short Summary" 的 itemize 之后
+  - **格式**：`\journal{}` + `framed` 环境
+  - **内容**：三条假设（线性运动、凸包、IEEE 754）+ 保证（无 FN，可能 FP）+ 不保证（manifold contact、自交、trimmed 域）
 
-- [ ] **更新 flow diagram** (R2)
-  - **修改位置**：`Sections/Figures.tex` 中的 `fig:dataset-pipeline`
-  - **操作**：在 pipeline 图中用不同颜色/标注区分 exact rational arithmetic 步骤（Step I-VI）和 floating-point 步骤（最终输出转换）
+- [x] **更新 flow diagram** (R2) ✅ 不需要改
+  - Pipeline 全程为 exact rational arithmetic，图中已足够清晰
+  - 正文 Section 5.4 和 Verification 段落已明确说明
 
-- [ ] **统一术语** (R1)
-  - **问题**：Abstract 和 Introduction 中 "floating-point robustness"、"floating-point reliability"、"floating-point-resilient"、"error-resilient" 混用
-  - **操作**：全文搜索替换，统一为 "floating-point robustness"（名词）/ "robust"（形容词），仅在首次出现时解释与 resilience 的关系
-  - **涉及文件**：`CCD.tex`（Abstract L140-143）、`Introduction.tex`（L35, L42）
-  - 同时统一 "improves"/"mitigates"/"guarantees"：明确 TDIBM-E 是 **消除** FN（guarantee），不是 "降低风险"
+- [x] **统一术语** (R1) ✅ 已完成
+  - 全文 "floating-point reliability" → "floating-point robustness"，"resilient" → "robust"
+  - 去掉 "reliability and robustness" 冗余
+  - 涉及文件：`CCD.tex`（Abstract）、`Introduction.tex`（L35, L42, L52）、`Results.tex`（L65）
+  - 所有改动均用 `\journal{}` 标记
 
-- [ ] **首次使用 "dyadic property" 时给出定义** (R1)
-  - **修改位置**：`Dataset.tex` Section 5.4（"Construction Design for Floating-Point Representation"，约 L529）
-  - **加一句**：定义 dyadic numbers = 分母为 2 的幂次的有理数（即 $p/2^k$），它们可被 IEEE 754 浮点数精确表示
+- [x] **首次使用 "dyadic property" 时给出定义** (R1) ✅ 已完成
+  - **修改位置**：`Dataset.tex` Section 5.4 L535
+  - **已添加**：定义 dyadic rationals = $p/2^k$，IEEE 754 精确表示条件
 
 ### 实验与分析
 
@@ -65,30 +58,21 @@
   - **数据**：rebuttal 中提到 FF worst-case TDIBM-E 48s vs TDIBM-H 40s
   - **位置**：`Results.tex` 或 Appendix 新增一节
 
-- [ ] **浮点精确表示的补充实验** (R1, R4)
-  - **现状**：`Dataset.tex` Section 5.4 只说了 "carefully select... to make the generated data exactly representable"，但 R1/R4 都觉得不够清楚
-  - **操作**：
-    1. 明确报告 discard rate = 0%（因为从 float 起步，保持 dyadic 性质）
-    2. 展开 Section 5.4 被注释掉的内容（L548-560 的 `\begin{comment}` 块），解释为什么 Gaussian elimination 可能破坏 dyadic 性质，以及你们如何通过约束法线为 power-of-two 分量来规避
-    3. 添加实验表格：生成 N 组数据，报告每组的 `isPreciselyRepresent()` 通过率
+- [x] **浮点精确表示的补充实验** (R1, R4) ✅ 部分完成
+  - **已完成**：Section 5.4 展开了 dyadic 性质说明、constraint solving 策略、各子参数约束、Verification 段落（discard rate = 0%）
+  - **未完成**：缺少实验表格（生成 N 组数据，报告 `isPreciselyRepresent()` 通过率）
 
-- [ ] **澄清 error decomposition 的 novelty** (R1)
-  - **修改位置**：`Error-Bound-Analysis.tex` Section "Core Idea for Robust Error Handling"（约 L17-27）
-  - **操作**：在现有文字后加一段，明确对比经典 interval arithmetic：
-    - 经典方法：operand 误差 → 运算累积 → 结果误差，但不处理 **比较分支**
-    - 本文方法：将误差分为 coefficient errors（累积型，标准 interval analysis 可处理）和 arithmetic errors（分支型，比较决策导致拓扑变化，无法累积分析）
-    - 核心 novelty：对后者放弃后验修正，转为前置预处理（拉开 envelope），保证即使拓扑变化也是保守的
+- [ ] **澄清 error decomposition 的 novelty** (R1) → 降级为 nice-to-have
+  - **原因**：rebuttal 中是反驳而非承诺，现有正文 `Error-Bound-Analysis.tex` "Core Idea" 小节已阐述 decomposition 思路
+  - **如有余力**：可在 L27 前加一句显式对比经典 interval arithmetic 不处理比较分支
 
 ### 讨论补充
 
-- [ ] **Non-point contacts 讨论** (R1)
-  - **修改位置**：`Conclusions.tex`，扩展现有 L8 的 limitation 句子
-  - **操作**：目前只有一句 "A limitation of the dataset is its focus on isolated point collisions"，扩展为一段：
-    - TDIBM 算法本身可处理 manifold contacts（和单点碰撞方式相同）
-    - 数据集生成管线（inverse construction）仅支持 isolated contact points，因为求解器基于 Eq.(1) 的单点约束
-    - 生成精确的 curve/area contact 需要根本性的代数设计变更（future work）
+- [x] **Non-point contacts 讨论** (R1) ✅ 已完成
+  - **修改位置**：`Conclusions.tex` L9
+  - **已添加**：TDIBM 可处理 manifold contacts，但数据集生成仅支持 isolated points，curve/area contact 需要全新代数设计
 
-- [ ] **CAD 适用性路线图** (R2) — 与上方硬性条件合并
+- [x] **CAD 适用性路线图** (R2) — 与上方硬性条件合并 ✅ 已完成（见 Conclusions.tex L13-14）
 
 ---
 
@@ -98,57 +82,52 @@
 
 > 以下行号对应 review 原文。由于 journal revision 内容可能会移位，操作以**语义定位**为准。
 
-- [ ] **"parametric surfaces" 含义**（原 Line 66）
-  - **位置**：`CCD.tex` L65（标题）+ `Introduction.tex` 开头
-  - **操作**：在 Introduction 首段补充 "In this work, we focus on tensor-product and triangular Bézier patches"
+- [x] **"parametric surfaces" 含义**（原 Line 66）✅ 已完成
+  - Introduction.tex 加 "in this work, we focus on tensor-product and triangular Bézier patches"
 
-- [ ] **"collision constraints admit infinitely many solutions"**（原 Line 166）
-  - **位置**：`Related-Work.tex` L26（CCD dataset 段落）
-  - **操作**：改为 "the collision constraints may admit infinitely many solutions due to non-isolated contacts (e.g., along a common curve), causing Mathematica to..."
+- [x] **"collision constraints admit infinitely many solutions"**（原 Line 166）✅ 已完成
+  - 改为 "may admit infinitely many solutions due to non-isolated contacts (e.g., along a common curve)"
 
-- [ ] **"the surface lies within their convex hull"**（原 Line 186）
-  - **位置**：`Background.tex` L32
-  - **操作**：改为 "the surface lies within the convex hull of its control points, a standard consequence of the variation-diminishing property of Bernstein polynomials"
+- [x] **"the surface lies within their convex hull"**（原 Line 186）✅ 跳过
+  - 已在 Assumptions/Guarantees box 中正式声明（variation-diminishing property），无需在 Background 重复
 
-- [ ] **定义 $\tau^L$**（原 Line 209）
+- [ ] **定义 $\tau^L$**（原 Line 209）— ⚪ 可做可不做（rebuttal 仅解释）
   - **位置**：`Background.tex` L68，优先队列排序处
   - **操作**：在 "sorted by ascending $\tau^\mathrm{L}$" 后加括号注释 "(the lower time bound of that subdomain)"
 
-- [ ] **"convergence criterion" 细节**（原 Line 211）
-  - **位置**：`Background.tex` L69
-  - **操作**：补充 "i.e., the parametric intervals have been refined below a user-specified threshold (e.g., $10^{-4}$)"
+- [x] **"convergence criterion" 细节**（原 Line 211）✅ 已完成
+  - Background.tex 加 "(i.e., all parametric intervals have been refined below a user-specified threshold, e.g., $10^{-4}$)"
 
-- [ ] **单区间 vs 多区间**（原 Line 227）
+- [ ] **单区间 vs 多区间**（原 Line 227）— ⚪ 可做可不做（rebuttal 仅解释）
   - **位置**：`Background.tex` L88 附近
   - **操作**：加脚注 "While multiple disjoint intervals are theoretically possible, storing and intersecting them is significantly more expensive; we adopt a single interval for simplicity as the additional precision gain is marginal."
 
-- [ ] **"non-polygonal" envelope**（原 Line 288）
+- [ ] **"non-polygonal" envelope**（原 Line 288）— ⚪ 可做可不做（rebuttal 仅解释）
   - **位置**：`Error-Bound-Analysis.tex` L8
   - **操作**：在 "non-polygonal geometries" 后加括号 "(e.g., line selection errors may produce self-intersecting or non-convex envelope boundaries that are no longer valid piecewise-linear functions)"
 
-- [ ] **"exact convex hull"**（原 Line 306）
+- [ ] **"exact convex hull"**（原 Line 306）— ⚪ 可做可不做（rebuttal 仅解释）
   - **位置**：`Error-Bound-Analysis.tex` 约 L21
   - **操作**：改为 "assuming the envelope is constructed exactly (i.e., with correct topology and segment ordering), the coefficient error alone..."
 
-- [ ] **$a$ vs $\alpha$ 符号**（原 Line 365）
+- [ ] **$a$ vs $\alpha$ 符号**（原 Line 365）— ⚪ 可做可不做（rebuttal 仅解释）
   - **位置**：`Error-Bound-Analysis.tex` 或 `Error-Bound-Computation.tex`
   - **操作**：加一句说明 "We use $a$ (Latin) to denote the coefficient values $\{a_\alpha^{(1)}\}$ and $\alpha$ (Greek) as their index."
 
-- [ ] **多线段缺失的累积影响**（原 Line 420）
+- [ ] **多线段缺失的累积影响**（原 Line 420）— ⚪ 可做可不做（rebuttal 仅解释，现有正文已有内容）
   - **位置**：`Error-Bound-Computation.tex` 或 `Error-Bound-Intersection.tex`
   - **操作**：加一句 "We first bound the impact of a single segment omission (this subsection), then show that multiple omissions accumulate additively (see Lines XX–XX below)"
 
-- [ ] **"assigning compatible values" 详解**（原 Line 576）
-  - **位置**：`Dataset.tex` L53（Step II）
-  - **操作**：把 "assign compatible values to the remaining DoFs" 展开为 "randomly generate floating-point-representable coordinates for the control points corresponding to the redundant degrees of freedom, ensuring they satisfy the dyadic constraint described in Section~\ref{sec:principled_design}"
+- [x] **"assigning compatible values" 详解**（原 Line 576）✅ 已完成
+  - Dataset.tex Step II 加 forward reference "(see Section~\ref{sec:principled_design} for details)"
+  - Section 5.4 已有详细展开，无需重复
 
-- [ ] **速度采样来源**（原 Line 647）
+- [ ] **速度采样来源**（原 Line 647）— ⚪ 可做可不做（rebuttal 仅解释）
   - **位置**：`Dataset.tex` L282（corner cases velocity 段落）
   - **操作**：将 "velocities... are sampled within opposite half-spaces induced by the face tangent plane" 改为 "velocities are sampled from the two opposite half-spaces separated by the contact tangent plane (not from the plane itself)"
 
-- [ ] **"more false positives" 精确数字**（原 Line 757）
-  - **位置**：`Results.tex` 评估段落
-  - **操作**：改为 "with only marginally more false positives (three additional FF and two additional VV cases relative to 175 existing FP)"
+- [x] **"more false positives" 精确数字**（原 Line 757）✅ 跳过
+  - R4 担忧 TDIBM-E 与 TDIBM-H(10⁻¹²) FP 无差异，新表格已通过 10⁻¹⁶/10⁻¹²/10⁻⁸ 三组对比回答了此问题，无需额外文字
 
 ### R2 结构建议
 
@@ -193,7 +172,8 @@
 
 - [ ] TDIBM-H 10⁻⁸ tolerance 实验 — **已完成**，表格中已包含 $10^{-8}$, $10^{-12}$, $10^{-16}$ 三组 (R4 ✓)
 - [ ] 提交时附 cover letter — 使用 `Sections/Cover-Letter.tex`，说明与 SIGGRAPH Asia 轮次的主要变化 (R4)
-- [ ] 手工构造 curve/area contact 示例（如果 Committee 在 camera-ready 阶段要求）(R1)
+- [x] ~~手工构造 curve/area contact 示例~~ ✅ 不需要做
+  - Rebuttal 说的是 "if required"，Committee 未要求
 
 ---
 

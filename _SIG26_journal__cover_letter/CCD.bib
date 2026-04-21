@@ -1,0 +1,927 @@
+%%% ====================================================================
+%%%  BibTeX-file{
+%%%     author          = "Gerry Murray",
+%%%     version         = "1.2",
+%%%     date            = "2 April 2012",
+%%%     filename        = "acmsmall-sample-bibfile.bib",
+%%%     address         = "ACM, NY",
+%%%     email           = "murray at hq.acm.org",
+%%%     codetable       = "ISO/ASCII",
+%%%     keywords        = "ACM Reference Format, bibliography, citation, references",
+%%%     supported       = "yes",
+%%%     docstring       = "This BibTeX database file contains 'bibdata' entries
+%%%                        that 'match' the examples provided in the Specifications Document
+%%%                        AND, also, 'legacy'-type bibs. It should assist authors in
+%%%                        choosing the 'correct' at-bibtype and necessary bib-fields
+%%%                        so as to obtain the appropriate ACM Reference Format output.
+%%%                        It also contains many 'Standard Abbreviations'. "
+%%%  }
+%%% ====================================================================
+
+% Journals
+
+% First the Full Name is given, then the abbreviation used in the AMS Math
+% Reviews, with an indication if it could not be found there.
+% Note the 2nd overwrites the 1st, so swap them if you want the full name.
+
+ %{AMS}
+ @String{AMSTrans = "American Mathematical Society Translations" }
+ @String{AMSTrans = "Amer. Math. Soc. Transl." }
+ @String{BullAMS = "Bulletin of the American Mathematical Society" }
+ @String{BullAMS = "Bull. Amer. Math. Soc." }
+ @String{ProcAMS = "Proceedings of the American Mathematical Society" }
+ @String{ProcAMS = "Proc. Amer. Math. Soc." }
+ @String{TransAMS = "Transactions of the American Mathematical Society" }
+ @String{TransAMS = "Trans. Amer. Math. Soc." }
+
+ %ACM
+ @String{CACM = "Communications of the {ACM}" }
+ @String{CACM = "Commun. {ACM}" }
+ @String{CompServ = "Comput. Surveys" }
+ @String{JACM = "J. ACM" }
+ @String{ACMMathSoft = "{ACM} Transactions on Mathematical Software" }
+ @String{ACMMathSoft = "{ACM} Trans. Math. Software" }
+ @String{SIGNUM = "{ACM} {SIGNUM} Newsletter" }
+ @String{SIGNUM = "{ACM} {SIGNUM} Newslett." }
+
+ @String{AmerSocio = "American Journal of Sociology" }
+ @String{AmerStatAssoc = "Journal of the American Statistical Association" }
+ @String{AmerStatAssoc = "J. Amer. Statist. Assoc." }
+ @String{ApplMathComp = "Applied Mathematics and Computation" }
+ @String{ApplMathComp = "Appl. Math. Comput." }
+ @String{AmerMathMonthly = "American Mathematical Monthly" }
+ @String{AmerMathMonthly = "Amer. Math. Monthly" }
+ @String{BIT = "{BIT}" }
+ @String{BritStatPsych = "British Journal of Mathematical and Statistical
+          Psychology" }
+ @String{BritStatPsych = "Brit. J. Math. Statist. Psych." }
+ @String{CanMathBull = "Canadian Mathematical Bulletin" }
+ @String{CanMathBull = "Canad. Math. Bull." }
+ @String{CompApplMath = "Journal of Computational and Applied Mathematics" }
+ @String{CompApplMath = "J. Comput. Appl. Math." }
+ @String{CompPhys = "Journal of Computational Physics" }
+ @String{CompPhys = "J. Comput. Phys." }
+ @String{CompStruct = "Computers and Structures" }
+ @String{CompStruct = "Comput. \& Structures" }
+ @String{CompJour = "The Computer Journal" }
+ @String{CompJour = "Comput. J." }
+ @String{CompSysSci = "Journal of Computer and System Sciences" }
+ @String{CompSysSci = "J. Comput. System Sci." }
+ @String{Computing = "Computing" }
+ @String{ContempMath = "Contemporary Mathematics" }
+ @String{ContempMath = "Contemp. Math." }
+ @String{Crelle = "Crelle's Journal" }
+ @String{GiornaleMath = "Giornale di Mathematiche" }
+ @String{GiornaleMath = "Giorn. Mat." } % didn't find in AMS MR., ibid.
+
+ %IEEE
+ @String{Computer = "{IEEE} Computer" }
+ @String{IEEETransComp = "{IEEE} Transactions on Computers" }
+ @String{IEEETransComp = "{IEEE} Trans. Comput." }
+ @String{IEEETransAC = "{IEEE} Transactions on Automatic Control" }
+ @String{IEEETransAC = "{IEEE} Trans. Automat. Control" }
+ @String{IEEESpec = "{IEEE} Spectrum" } % didn't find in AMS MR
+ @String{ProcIEEE = "Proceedings of the {IEEE}" }
+ @String{ProcIEEE = "Proc. {IEEE}" } % didn't find in AMS MR
+ @String{IEEETransAeroElec = "{IEEE} Transactions on Aerospace and Electronic
+     Systems" }
+ @String{IEEETransAeroElec = "{IEEE} Trans. Aerospace Electron. Systems" }
+
+ @String{IMANumerAna = "{IMA} Journal of Numerical Analysis" }
+ @String{IMANumerAna = "{IMA} J. Numer. Anal." }
+ @String{InfProcLet = "Information Processing Letters" }
+ @String{InfProcLet = "Inform. Process. Lett." }
+ @String{InstMathApp = "Journal of the Institute of Mathematics and
+     its Applications" }
+ @String{InstMathApp = "J. Inst. Math. Appl." }
+ @String{IntControl = "International Journal of Control" }
+ @String{IntControl = "Internat. J. Control" }
+ @String{IntNumerEng = "International Journal for Numerical Methods in
+     Engineering" }
+ @String{IntNumerEng = "Internat. J. Numer. Methods Engrg." }
+ @String{IntSuper = "International Journal of Supercomputing Applications" }
+ @String{IntSuper = "Internat. J. Supercomputing Applic." } % didn't find
+%% in AMS MR
+ @String{Kibernetika = "Kibernetika" }
+ @String{JResNatBurStand = "Journal of Research of the National Bureau
+     of Standards" }
+ @String{JResNatBurStand = "J. Res. Nat. Bur. Standards" }
+ @String{LinAlgApp = "Linear Algebra and its Applications" }
+ @String{LinAlgApp = "Linear Algebra Appl." }
+ @String{MathAnaAppl = "Journal of Mathematical Analysis and Applications" }
+ @String{MathAnaAppl = "J. Math. Anal. Appl." }
+ @String{MathAnnalen = "Mathematische Annalen" }
+ @String{MathAnnalen = "Math. Ann." }
+ @String{MathPhys = "Journal of Mathematical Physics" }
+ @String{MathPhys = "J. Math. Phys." }
+ @String{MathComp = "Mathematics of Computation" }
+ @String{MathComp = "Math. Comp." }
+ @String{MathScand = "Mathematica Scandinavica" }
+ @String{MathScand = "Math. Scand." }
+ @String{TablesAidsComp = "Mathematical Tables and Other Aids to Computation" }
+ @String{TablesAidsComp = "Math. Tables Aids Comput." }
+ @String{NumerMath = "Numerische Mathematik" }
+ @String{NumerMath = "Numer. Math." }
+ @String{PacificMath = "Pacific Journal of Mathematics" }
+ @String{PacificMath = "Pacific J. Math." }
+ @String{ParDistComp = "Journal of Parallel and Distributed Computing" }
+ @String{ParDistComp = "J. Parallel and Distrib. Comput." } % didn't find
+%% in AMS MR
+ @String{ParComputing = "Parallel Computing" }
+ @String{ParComputing = "Parallel Comput." }
+ @String{PhilMag = "Philosophical Magazine" }
+ @String{PhilMag = "Philos. Mag." }
+ @String{ProcNAS = "Proceedings of the National Academy of Sciences
+                    of the USA" }
+ @String{ProcNAS = "Proc. Nat. Acad. Sci. U. S. A." }
+ @String{Psychometrika = "Psychometrika" }
+ @String{QuartMath = "Quarterly Journal of Mathematics, Oxford, Series (2)" }
+ @String{QuartMath = "Quart. J. Math. Oxford Ser. (2)" }
+ @String{QuartApplMath = "Quarterly of Applied Mathematics" }
+ @String{QuartApplMath = "Quart. Appl. Math." }
+ @String{RevueInstStat = "Review of the International Statisical Institute" }
+ @String{RevueInstStat = "Rev. Inst. Internat. Statist." }
+
+ %SIAM
+ @String{JSIAM = "Journal of the Society for Industrial and Applied
+     Mathematics" }
+ @String{JSIAM = "J. Soc. Indust. Appl. Math." }
+ @String{JSIAMB = "Journal of the Society for Industrial and Applied
+     Mathematics, Series B, Numerical Analysis" }
+ @String{JSIAMB = "J. Soc. Indust. Appl. Math. Ser. B Numer. Anal." }
+ @String{SIAMAlgMeth = "{SIAM} Journal on Algebraic and Discrete Methods" }
+ @String{SIAMAlgMeth = "{SIAM} J. Algebraic Discrete Methods" }
+ @String{SIAMAppMath = "{SIAM} Journal on Applied Mathematics" }
+ @String{SIAMAppMath = "{SIAM} J. Appl. Math." }
+ @String{SIAMComp = "{SIAM} Journal on Computing" }
+ @String{SIAMComp = "{SIAM} J. Comput." }
+ @String{SIAMMatrix = "{SIAM} Journal on Matrix Analysis and Applications" }
+ @String{SIAMMatrix = "{SIAM} J. Matrix Anal. Appl." }
+ @String{SIAMNumAnal = "{SIAM} Journal on Numerical Analysis" }
+ @String{SIAMNumAnal = "{SIAM} J. Numer. Anal." }
+ @String{SIAMReview = "{SIAM} Review" }
+ @String{SIAMReview = "{SIAM} Rev." }
+ @String{SIAMSciStat = "{SIAM} Journal on Scientific and Statistical
+     Computing" }
+ @String{SIAMSciStat = "{SIAM} J. Sci. Statist. Comput." }
+
+ @String{SoftPracExp = "Software Practice and Experience" }
+ @String{SoftPracExp = "Software Prac. Experience" } % didn't find in AMS MR
+ @String{StatScience = "Statistical Science" }
+ @String{StatScience = "Statist. Sci." }
+ @String{Techno = "Technometrics" }
+ @String{USSRCompMathPhys = "{USSR} Computational Mathematics and Mathematical
+     Physics" }
+ @String{USSRCompMathPhys = "{U. S. S. R.} Comput. Math. and Math. Phys." }
+ @String{VLSICompSys = "Journal of {VLSI} and Computer Systems" }
+ @String{VLSICompSys = "J. {VLSI} Comput. Syst." }
+ @String{ZAngewMathMech = "Zeitschrift fur Angewandte Mathematik und
+     Mechanik" }
+ @String{ZAngewMathMech = "Z. Angew. Math. Mech." }
+ @String{ZAngewMathPhys = "Zeitschrift fur Angewandte Mathematik und Physik" }
+ @String{ZAngewMathPhys = "Z. Angew. Math. Phys." }
+
+% Publishers % ================================================= |
+
+ @String{Academic = "Academic Press" }
+ @String{ACMPress = "{ACM} Press" }
+ @String{AdamHilger = "Adam Hilger" }
+ @String{AddisonWesley = "Addison-Wesley" }
+ @String{AllynBacon = "Allyn and Bacon" }
+ @String{AMS = "American Mathematical Society" }
+ @String{Birkhauser = "Birkha{\"u}ser" }
+ @String{CambridgePress = "Cambridge University Press" }
+ @String{Chelsea = "Chelsea" }
+ @String{ClaredonPress = "Claredon Press" }
+ @String{DoverPub = "Dover Publications" }
+ @String{Eyolles = "Eyolles" }
+ @String{HoltRinehartWinston = "Holt, Rinehart and Winston" }
+ @String{Interscience = "Interscience" }
+ @String{JohnsHopkinsPress = "The Johns Hopkins University Press" }
+ @String{JohnWileySons = "John Wiley and Sons" }
+ @String{Macmillan = "Macmillan" }
+ @String{MathWorks = "The Math Works Inc." }
+ @String{McGrawHill = "McGraw-Hill" }
+ @String{NatBurStd = "National Bureau of Standards" }
+ @String{NorthHolland = "North-Holland" }
+ @String{OxfordPress = "Oxford University Press" }  %address Oxford or London?
+ @String{PergamonPress = "Pergamon Press" }
+ @String{PlenumPress = "Plenum Press" }
+ @String{PrenticeHall = "Prentice-Hall" }
+ @String{SIAMPub = "{SIAM} Publications" }
+ @String{Springer = "Springer-Verlag" }
+ @String{TexasPress = "University of Texas Press" }
+ @String{VanNostrand = "Van Nostrand" }
+ @String{WHFreeman = "W. H. Freeman and Co." }
+
+%Entries
+@inproceedings{Herzen90,
+author = {Von Herzen, Brian and Barr, Alan H. and Zatz, Harold R.},
+title = {Geometric collisions for time-dependent parametric surfaces},
+year = {1990},
+isbn = {0897913442},
+publisher = {Association for Computing Machinery},
+address = {New York, NY, USA},
+url = {https://doi.org/10.1145/97879.97883},
+doi = {10.1145/97879.97883},
+booktitle = {Proceedings of the 17th Annual Conference on Computer Graphics and Interactive Techniques},
+pages = {39–48},
+numpages = {10},
+location = {Dallas, TX, USA},
+series = {SIGGRAPH '90}
+}
+
+@inproceedings{Snyder92,
+author = {Snyder, John M.},
+title = {Interval analysis for computer graphics},
+year = {1992},
+isbn = {0897914791},
+publisher = {Association for Computing Machinery},
+address = {New York, NY, USA},
+url = {https://doi.org/10.1145/133994.134024},
+doi = {10.1145/133994.134024},
+booktitle = {Proceedings of the 19th Annual Conference on Computer Graphics and Interactive Techniques},
+pages = {121–130},
+numpages = {10},
+keywords = {interval analysis, inclusion function, implicit curve, constraint solution, constrained minimization, approximation},
+series = {SIGGRAPH '92}
+}
+
+@inproceedings{Snyder93,
+author = {Snyder, John M. and Woodbury, Adam R. and Fleischer, Kurt and Currin, Bena and Barr, Alan H.},
+title = {Interval methods for multi-point collisions between time-dependent curved surfaces},
+year = {1993},
+isbn = {0897916018},
+publisher = {Association for Computing Machinery},
+address = {New York, NY, USA},
+url = {https://doi.org/10.1145/166117.166158},
+doi = {10.1145/166117.166158},
+booktitle = {Proceedings of the 20th Annual Conference on Computer Graphics and Interactive Techniques},
+pages = {321–334},
+numpages = {14},
+keywords = {interval linear equation, interval Newton method, inclusion function},
+location = {Anaheim, CA},
+series = {SIGGRAPH '93}
+}
+
+@inproceedings{Ferguson23,
+author = {Ferguson, Zachary and Jain, Pranav and Zorin, Denis and Schneider, Teseo and Panozzo, Daniele},
+title = {High-Order Incremental Potential Contact for Elastodynamic Simulation on Curved Meshes},
+year = {2023},
+isbn = {9798400701597},
+publisher = {Association for Computing Machinery},
+address = {New York, NY, USA},
+url = {https://doi.org/10.1145/3588432.3591488},
+doi = {10.1145/3588432.3591488},
+booktitle = {ACM SIGGRAPH 2023 Conference Proceedings},
+articleno = {77},
+numpages = {11},
+keywords = {Elastodynamics, Finite element method, Frictional contact},
+location = {Los Angeles, CA, USA},
+series = {SIGGRAPH '23}
+}
+
+@inproceedings{Zhang23,
+author = {Zhang, Paul and Marschner, Zo\"{e} and Solomon, Justin and Tamstorf, Rasmus},
+title = {Sum-of-Squares Collision Detection for Curved Shapes and Paths},
+year = {2023},
+isbn = {9798400701597},
+publisher = {Association for Computing Machinery},
+address = {New York, NY, USA},
+url = {https://doi.org/10.1145/3588432.3591507},
+doi = {10.1145/3588432.3591507},
+booktitle = {ACM SIGGRAPH 2023 Conference Proceedings},
+articleno = {76},
+numpages = {11},
+keywords = {collision detection, parametric shape analysis, sum-of-squares programming},
+location = {Los Angeles, CA, USA},
+series = {SIGGRAPH '23}
+}
+
+@inproceedings{Provot1997CollisionAS,
+  title={Collision and self-collision handling in cloth model dedicated to design garments},
+  author={Xavier Provot},
+  booktitle={Computer Animation and Simulation},
+  year={1997},
+  url={https://api.semanticscholar.org/CorpusID:7421415}
+}
+
+@article{Redon02,
+author = {Redon, Stéphane and Kheddar, Abderrahmane and Coquillart, Sabine},
+title = {Fast Continuous Collision Detection between Rigid Bodies},
+journal = {Computer Graphics Forum},
+volume = {21},
+number = {3},
+pages = {279-287},
+doi = {https://doi.org/10.1111/1467-8659.t01-1-00587},
+url = {https://onlinelibrary.wiley.com/doi/abs/10.1111/1467-8659.t01-1-00587},
+eprint = {https://onlinelibrary.wiley.com/doi/pdf/10.1111/1467-8659.t01-1-00587},
+year = {2002}
+}
+
+@INPROCEEDINGS{Hughes96dcd,
+  author={Hughes, M. and DiMattia, C. and Lin, M.C. and Manocha, D.},
+  booktitle={Proceedings Computer Animation '96}, 
+  title={Efficient and accurate interference detection for polynomial deformation}, 
+  year={1996},
+  volume={},
+  number={},
+  pages={155-166}
+}
+
+@article{Teschner05,
+author = {Teschner, M. and Kimmerle, S. and Heidelberger, B. and Zachmann, G. and Raghupathi, L. and Fuhrmann, A. and Cani, M.-P. and Faure, F. and Magnenat-Thalmann, N. and Strasser, W. and Volino, P.},
+title = {Collision Detection for Deformable Objects},
+journal = {Computer Graphics Forum},
+volume = {24},
+number = {1},
+pages = {61-81},
+year = {2005}
+}
+
+@article{Lu2014,
+title = {Dynamic cloth simulation by isogeometric analysis},
+journal = {Computer Methods in Applied Mechanics and Engineering},
+volume = {268},
+pages = {475--493},
+year = {2014},
+author = {Jia Lu and Chao Zheng},
+}
+
+@article{LU2011,
+title = {Isogeometric contact analysis: Geometric basis and formulation for frictionless contact},
+journal = {Computer Methods in Applied Mechanics and Engineering},
+volume = {200},
+number = {5},
+pages = {726-741},
+year = {2011},
+issn = {0045-7825},
+author = {Jia Lu}
+}
+
+@article{Trusty2021,
+author = {Trusty, Ty and Chen, Honglin and Levin, David I. W.},
+title = {The Shape Matching Element Method: Direct Animation of Curved Surface Models},
+year = {2021},
+issue_date = {August 2021},
+publisher = {Association for Computing Machinery},
+address = {New York, NY, USA},
+volume = {40},
+number = {4},
+journal = {ACM Trans. Graph.},
+month = {jul},
+articleno = {69},
+numpages = {14},
+keywords = {lagrangian mechanics, meshless simulation, physically-based animation, NURBS simulation}
+}
+
+@article{wang21,
+author = {Wang, Bolun and Ferguson, Zachary and Schneider, Teseo and Jiang, Xin and Attene, Marco and Panozzo, Daniele},
+title = {A Large-scale Benchmark and an Inclusion-based Algorithm for Continuous Collision Detection},
+year = {2021},
+issue_date = {October 2021},
+publisher = {Association for Computing Machinery},
+address = {New York, NY, USA},
+volume = {40},
+number = {5},
+issn = {0730-0301},
+url = {https://doi.org/10.1145/3460775},
+doi = {10.1145/3460775},
+journal = {ACM Trans. Graph.},
+month = {sep},
+articleno = {188},
+numpages = {16},
+keywords = {Continuous collision detection, computational geometry, physically based animation}
+}
+@incollection{Yap2004,
+  author       = {Chee K. Yap},
+  editor       = {Jacob E. Goodman and
+                  Joseph O'Rourke},
+  title        = {Robust geometric computation},
+  booktitle    = {Handbook of Discrete and Computational Geometry, Second Edition},
+  pages        = {927--952},
+  publisher    = {Chapman and Hall/CRC},
+  year         = {2004},
+  url          = {https://doi.org/10.1201/9781420035315.ch41},
+  doi          = {10.1201/9781420035315.CH41},
+  timestamp    = {Wed, 12 Jul 2017 09:11:49 +0200},
+  biburl       = {https://dblp.org/rec/reference/cg/Yap04.bib},
+  bibsource    = {dblp computer science bibliography, https://dblp.org}
+}
+@article{brochu12,
+author = {Brochu, Tyson and Edwards, Essex and Bridson, Robert},
+title = {Efficient geometrically exact continuous collision detection},
+year = {2012},
+issue_date = {July 2012},
+publisher = {Association for Computing Machinery},
+address = {New York, NY, USA},
+volume = {31},
+number = {4},
+issn = {0730-0301},
+url = {https://doi.org/10.1145/2185520.2185592},
+doi = {10.1145/2185520.2185592},
+journal = {ACM Trans. Graph.},
+month = {jul},
+articleno = {96},
+numpages = {7},
+keywords = {physically based animation, computational geometry, collision detection, cloth simulation}
+}
+
+@article{bridson02,
+author = {Bridson, Robert and Fedkiw, Ronald and Anderson, John},
+title = {Robust treatment of collisions, contact and friction for cloth animation},
+year = {2002},
+issue_date = {July 2002},
+publisher = {Association for Computing Machinery},
+address = {New York, NY, USA},
+volume = {21},
+number = {3},
+issn = {0730-0301},
+url = {https://doi.org/10.1145/566654.566623},
+doi = {10.1145/566654.566623},
+journal = {ACM Trans. Graph.},
+month = {jul},
+pages = {594–603},
+numpages = {10},
+keywords = {cloth, collision detection, collision response, contacts, kinetic friction, physically based animation, static friction}
+}
+@article{Wang2014,
+author = {Wang, Huamin},
+title = {Defending continuous collision detection against errors},
+year = {2014},
+issue_date = {July 2014},
+publisher = {Association for Computing Machinery},
+address = {New York, NY, USA},
+volume = {33},
+number = {4},
+issn = {0730-0301},
+url = {https://doi.org/10.1145/2601097.2601114},
+doi = {10.1145/2601097.2601114},
+journal = {ACM Trans. Graph.},
+month = {jul},
+articleno = {122},
+numpages = {10}
+}
+@article{Tang2014,
+author = {Tang, Min and Tong, Ruofeng and Wang, Zhendong and Manocha, Dinesh},
+title = {Fast and exact continuous collision detection with Bernstein sign classification},
+year = {2014},
+issue_date = {November 2014},
+publisher = {Association for Computing Machinery},
+address = {New York, NY, USA},
+volume = {33},
+number = {6},
+issn = {0730-0301},
+url = {https://doi.org/10.1145/2661229.2661237},
+doi = {10.1145/2661229.2661237},
+journal = {ACM Trans. Graph.},
+month = {nov},
+articleno = {186},
+numpages = {8},
+}
+
+@ARTICLE{tang09,
+  author={Tang, Min and Curtis, Sean and Yoon, Sung-Eui and Manocha, Dinesh},
+  journal={IEEE Transactions on Visualization and Computer Graphics}, 
+  title={ICCD: Interactive Continuous Collision Detection between Deformable Models Using Connectivity-Based Culling}, 
+  year={2009},
+  volume={15},
+  number={4},
+  pages={544-557},
+  doi={10.1109/TVCG.2009.12}}
+
+@article{BOEHM1999587,
+title = {On de Casteljau's algorithm},
+journal = {Computer Aided Geometric Design},
+volume = {16},
+number = {7},
+pages = {587-605},
+year = {1999},
+issn = {0167-8396},
+doi = {https://doi.org/10.1016/S0167-8396(99)00023-0},
+url = {https://www.sciencedirect.com/science/article/pii/S0167839699000230},
+author = {Wolfgang Boehm and Andreas Müller},
+keywords = {Bézier curves, de Casteljau algorithm, Blossoming, Polar forms, Splines, Focal curves},
+}
+
+@incollection{SEIDEL1989573,
+title = {A General Subdivision Theorem for Bézier Triangles},
+editor = {TOM LYCHE and LARRY L. SCHUMAKER},
+booktitle = {Mathematical Methods in Computer Aided Geometric Design},
+publisher = {Academic Press},
+pages = {573-581},
+year = {1989},
+isbn = {978-0-12-460515-2},
+doi = {https://doi.org/10.1016/B978-0-12-460515-2.50046-9},
+url = {https://www.sciencedirect.com/science/article/pii/B9780124605152500469},
+author = {H.-P. Seidel}
+}
+
+@InProceedings{galligo06,
+author="Galligo, A.
+and Pavone, J. P.",
+editor="Elkadi, Mohamed
+and Mourrain, Bernard
+and Piene, Ragni",
+title="A sampling algorithm computing self-intersections of parametric surfaces",
+booktitle="Algebraic Geometry and Geometric Modeling",
+year="2006",
+publisher="Springer Berlin Heidelberg",
+address="Berlin, Heidelberg",
+pages="185--204",
+isbn="978-3-540-33275-6"
+}
+
+@inproceedings{Efremov05,
+author = {Efremov, Alexander and Havran, Vlastimil and Seidel, Hans-Peter},
+title = {Robust and numerically stable B\'{e}zier clipping method for ray tracing NURBS surfaces},
+year = {2005},
+isbn = {1595932046},
+publisher = {Association for Computing Machinery},
+address = {New York, NY, USA},
+url = {https://doi.org/10.1145/1090122.1090144},
+doi = {10.1145/1090122.1090144},
+booktitle = {Proceedings of the 21st Spring Conference on Computer Graphics},
+pages = {127–135},
+numpages = {9},
+keywords = {ray tracing, rational B\'{e}zier surface, NURBS surface, B\'{e}zier clipping method},
+location = {Budmerice, Slovakia},
+series = {SCCG '05}
+}
+
+@book{nurbs95,
+author = {Piegl, Les and Tiller, Wayne},
+title = {The NURBS book},
+year = {1995},
+isbn = {3540550690},
+publisher = {Springer-Verlag},
+address = {Berlin, Heidelberg}
+}
+
+@article{Marschner21,
+author = {Marschner, Zo\"{e} and Zhang, Paul and Palmer, David and Solomon, Justin},
+title = {Sum-of-squares geometry processing},
+year = {2021},
+issue_date = {December 2021},
+publisher = {Association for Computing Machinery},
+address = {New York, NY, USA},
+volume = {40},
+number = {6},
+issn = {0730-0301},
+url = {https://doi.org/10.1145/3478513.3480551},
+doi = {10.1145/3478513.3480551},
+journal = {ACM Trans. Graph.},
+month = {dec},
+articleno = {253},
+numpages = {13},
+keywords = {collision detection, parametric surfaces, shape analysis, sum-of-squares optimization}
+}
+
+@article{Sederberg08,
+author = {Sederberg, Thomas W. and Finnigan, G. Thomas and Li, Xin and Lin, Hongwei and Ipson, Heather},
+title = {Watertight trimmed NURBS},
+year = {2008},
+issue_date = {August 2008},
+publisher = {Association for Computing Machinery},
+address = {New York, NY, USA},
+volume = {27},
+number = {3},
+issn = {0730-0301},
+url = {https://doi.org/10.1145/1360612.1360678},
+doi = {10.1145/1360612.1360678},
+journal = {ACM Trans. Graph.},
+month = {aug},
+pages = {1–8},
+numpages = {8},
+keywords = {surface intersection, T-splines, NURBS, Booleans}
+}
+
+@article{Wang:2022:FastRootParity,
+    title        = {Fast and Exact Root Parity for Continuous Collision Detection},
+    author       = {Bolun Wang and Zachary Ferguson and Xin Jiang and Marco Attene and Daniele Panozzo and Teseo Schneider},
+    year         = 2022,
+    journal      = {Computer Graphics Forum (Proceedings of Eurographics)},
+    volume       = 41,
+    number       = 2,
+    numpages     = 9
+}
+@article{wang2015,
+author = {Wang, Zhendong and Tang, Min and Tong, Ruofeng and Manocha, Dinesh},
+title = {TightCCD: Efficient and Robust Continuous Collision Detection using Tight Error Bounds},
+journal = {Computer Graphics Forum},
+volume = {34},
+number = {7},
+pages = {289-298},
+keywords = {Categories and Subject Descriptors (according to ACM CCS):, I.3.7 Computer Graphics: Three-Dimensional Graphics—Animation},
+doi = {https://doi.org/10.1111/cgf.12767},
+url = {https://onlinelibrary.wiley.com/doi/abs/10.1111/cgf.12767},
+eprint = {https://onlinelibrary.wiley.com/doi/pdf/10.1111/cgf.12767},
+year = {2015}
+}
+
+@article{Hughes2005,
+title = {Isogeometric analysis: CAD, finite elements, NURBS, exact geometry and mesh refinement},
+journal = {Computer Methods in Applied Mechanics and Engineering},
+volume = {194},
+number = {39},
+pages = {4135--4195},
+year = {2005},
+author = {T.J.R. Hughes and J.A. Cottrell and Y. Bazilevs},
+}
+
+@book{Cottrell2009,
+author = {Cottrell, J. Austin and Hughes, Thomas J. R. and Bazilevs, Yuri},
+title = {Isogeometric Analysis: Toward Integration of CAD and FEA},
+year = {2009},
+publisher = {Wiley Publishing},
+address = {Hoboken, NJ, USA},
+edition = {1st},
+}
+
+@INPROCEEDINGS{Hughes1996,
+  author={Hughes, M. and DiMattia, C. and Lin, M.C. and Manocha, D.},
+  booktitle={Proceedings Computer Animation '96}, 
+  title={Efficient and accurate interference detection for polynomial deformation}, 
+  year={1996},
+  volume={},
+  number={},
+  pages={155--166},
+}
+@article{Zhang2023IGA,
+title = {Large deformation frictional contact formulations for isogeometric Kirchhoff–Love shell},
+journal = {International Journal of Mechanical Sciences},
+volume = {249},
+pages = {108253},
+year = {2023},
+issn = {0020-7403},
+doi = {https://doi.org/10.1016/j.ijmecsci.2023.108253},
+url = {https://www.sciencedirect.com/science/article/pii/S0020740323001558},
+author = {Ran Zhang and Gang Zhao and Wei Wang and Xiaoxiao Du}
+}
+
+@article{ETER2023,
+author = {Xiong, Ruicheng and Lu, Yang and Chen, Cong and Zhu, Jiaming and Zeng, Yajun and Liu, Ligang},
+title = {ETER: Elastic Tessellation for Real-Time Pixel-Accurate Rendering of Large-Scale NURBS Models},
+year = {2023},
+issue_date = {August 2023},
+publisher = {Association for Computing Machinery},
+address = {New York, NY, USA},
+volume = {42},
+number = {4},
+issn = {0730-0301},
+url = {https://doi.org/10.1145/3592419},
+doi = {10.1145/3592419},
+journal = {ACM Trans. Graph.},
+month = {jul},
+articleno = {133},
+numpages = {13},
+keywords = {real-time rendering, GPU-based algorithms, adaptive tessellation, NURBS}
+}
+
+@inproceedings{Suwelack2013,
+author = {Suwelack, Stefan and Lukarski, Dimitar and Heuveline, Vincent and Dillmann, R\"{u}diger and Speidel, Stefanie},
+title = {Accurate surface embedding for higher order finite elements},
+year = {2013},
+isbn = {9781450321327},
+publisher = {Association for Computing Machinery},
+address = {New York, NY, USA},
+url = {https://doi.org/10.1145/2485895.2485914},
+doi = {10.1145/2485895.2485914},
+booktitle = {Proceedings of the 12th ACM SIGGRAPH/Eurographics Symposium on Computer Animation},
+pages = {187–192},
+numpages = {6},
+keywords = {higher order FE, deformable models},
+location = {Anaheim, California},
+series = {SCA '13}
+}
+
+@inproceedings {Buchenau2021,
+booktitle = {Vision, Modeling, and Visualization},
+editor = {Andres, Bjoern and Campen, Marcel and Sedlmair, Michael},
+title = {{Real-Time Curvature-aware Re-Parametrization and Tessellation of Bézier Surfaces}},
+author = {Buchenau, Christoph and Guthe, Michael},
+year = {2021},
+publisher = {The Eurographics Association},
+ISBN = {978-3-03868-161-8},
+DOI = {10.2312/vmv.20211370}
+}
+
+@article{Cardoso2017,
+author = {R. P. R. Cardoso and O. B. Adetoro},
+title = {On contact modelling in isogeometric analysis},
+journal = {European Journal of Computational Mechanics},
+volume = {26},
+number = {5-6},
+pages = {443-472},
+year = {2017},
+publisher = {Taylor & Francis},
+doi = {10.1080/17797179.2017.1354575},
+}
+
+@article{hubbard1995collision,
+  title={Collision detection for interactive graphics applications},
+  author={Hubbard, Philip Martyn},
+  journal={IEEE Transactions on Visualization and Computer Graphics},
+  volume={1},
+  number={3},
+  pages={218--230},
+  year={1995},
+  publisher={IEEE}
+}
+
+@inbook{Gottschalk1996OBBtree,
+author = {Gottschalk, S. and Lin, M. C. and Manocha, D.},
+title = {OBBTree: A Hierarchical Structure for Rapid Interference Detection},
+year = {2023},
+isbn = {9798400708978},
+publisher = {Association for Computing Machinery},
+address = {New York, NY, USA},
+edition = {1},
+url = {https://doi.org/10.1145/3596711.3596791},
+booktitle = {Seminal Graphics Papers: Pushing the Boundaries, Volume 2},
+articleno = {79},
+numpages = {10}
+}
+
+@thesis{gottschalk1996thesis,
+  title={Separating axis theorem},
+  author={Gottschalk, Stefan},
+  year={1996},
+  publisher={Technical Report TR96-024, Department of Computer Science, UNC Chapel Hill}
+}
+
+@article{Li2021CIPC,
+    author = {Minchen Li and Danny M. Kaufman and Chenfanfu Jiang},
+    title = {Codimensional Incremental Potential Contact},
+    journal = {ACM Trans. Graph. (SIGGRAPH)},
+    year = {2021},
+    volume = {40},
+    number = {4},
+    articleno = {170}
+}
+
+@article{Crespel2024,
+author = {Crespel, Octave and Hohnadel, Emile and Metivet, Thibaut and Bertails-Descoubes, Florence},
+title = {Contact detection between curved fibres: high order makes a difference},
+year = {2024},
+issue_date = {July 2024},
+publisher = {Association for Computing Machinery},
+address = {New York, NY, USA},
+volume = {43},
+number = {4},
+issn = {0730-0301},
+url = {https://doi.org/10.1145/3658191},
+doi = {10.1145/3658191},
+journal = {ACM Trans. Graph.},
+month = {jul},
+articleno = {132},
+numpages = {23}
+}
+@article{Ni2024BHEM,
+title = {Simulating Thin Shells by Bicubic Hermite Elements},
+journal = {Computer-Aided Design},
+volume = {174},
+pages = {103734},
+year = {2024},
+issn = {0010-4485},
+doi = {https://doi.org/10.1016/j.cad.2024.103734},
+url = {https://www.sciencedirect.com/science/article/pii/S0010448524000617},
+author = {Xingyu Ni and Xuwen Chen and Cheng yu and Bin Wang and Baoquan Chen},
+keywords = {Thin-shell simulation, High-order finite elements, Hermite interpolation}
+}
+@inproceedings{Harmon08,
+author = {Harmon, David and Vouga, Etienne and Tamstorf, Rasmus and Grinspun, Eitan},
+title = {Robust treatment of simultaneous collisions},
+year = {2008},
+isbn = {9781450301121},
+publisher = {Association for Computing Machinery},
+address = {New York, NY, USA},
+url = {https://doi.org/10.1145/1399504.1360622},
+doi = {10.1145/1399504.1360622},
+booktitle = {ACM SIGGRAPH 2008 Papers},
+articleno = {23},
+numpages = {4},
+keywords = {cloth, collision, configuration space, contact, shells, simulation},
+location = {Los Angeles, California},
+series = {SIGGRAPH '08}
+}
+
+@inproceedings{esolid2002,
+author = {Keyser, John and Culver, Tim and Foskey, Mark and Krishnan, Shankar and Manocha, Dinesh},
+title = {ESOLID---A System for Exact Boundary Evaluation},
+year = {2002},
+isbn = {1581135068},
+publisher = {Association for Computing Machinery},
+address = {New York, NY, USA},
+url = {https://doi.org/10.1145/566282.566289},
+doi = {10.1145/566282.566289},
+booktitle = {Proceedings of the Seventh ACM Symposium on Solid Modeling and Applications},
+pages = {23–34},
+numpages = {12},
+keywords = {boundary evaluation, exact computation, robustness, system implementation},
+location = {Saarbr\"{u}cken, Germany},
+series = {SMA '02}
+}
+
+@inproceedings{Shewchuk1996,
+author = {Shewchuk, Johnathan Richard},
+title = {Robust adaptive floating-point geometric predicates},
+year = {1996},
+isbn = {0897918045},
+publisher = {Association for Computing Machinery},
+address = {New York, NY, USA},
+url = {https://doi.org/10.1145/237218.237337},
+doi = {10.1145/237218.237337},
+booktitle = {Proceedings of the Twelfth Annual Symposium on Computational Geometry},
+pages = {141–150},
+numpages = {10},
+location = {Philadelphia, Pennsylvania, USA},
+series = {SCG '96}
+}
+@article{ATTENE2020102856,
+title = {Indirect Predicates for Geometric Constructions},
+journal = {Computer-Aided Design},
+volume = {126},
+pages = {102856},
+year = {2020},
+issn = {0010-4485},
+doi = {https://doi.org/10.1016/j.cad.2020.102856},
+url = {https://www.sciencedirect.com/science/article/pii/S001044852030049X},
+author = {Marco Attene},
+keywords = {Geometric predicates, Exact arithmetic, Filtering},
+}
+@article{FEITO2013705,
+title = {Fast and accurate evaluation of regularized Boolean operations on triangulated solids},
+journal = {Computer-Aided Design},
+volume = {45},
+number = {3},
+pages = {705-716},
+year = {2013},
+issn = {0010-4485},
+doi = {https://doi.org/10.1016/j.cad.2012.11.004},
+url = {https://www.sciencedirect.com/science/article/pii/S0010448512002746},
+author = {F.R. Feito and C.J. Ogayar and R.J. Segura and M.L. Rivero},
+keywords = {Boundary representations, Geometric algorithms, Boolean operations, Triangular meshes},
+}
+@article{Ferguson:2021:RigidIPC,
+    title     = {Intersection-free Rigid Body Dynamics},
+    author    = {Zachary Ferguson and Minchen Li and Teseo Schneider and Francisca Gil-Ureta and Timothy Langlois and Chenfanfu Jiang and Denis Zorin and Danny M. Kaufman and Daniele Panozzo},
+    year      = 2021,
+    journal   = {ACM Transactions on Graphics (SIGGRAPH)},
+    volume    = 40,
+    number    = 4,
+    articleno = 183
+}
+@article{Chen2024TDIBCCD,
+author = {Chen, Xuwen and Yu, Cheng and Ni, Xingyu and Chu, Mengyu and Wang, Bin and Chen, Baoquan},
+title = {A Time-Dependent Inclusion-Based Method for Continuous Collision Detection between Parametric Surfaces},
+year = {2024},
+issue_date = {December 2024},
+publisher = {Association for Computing Machinery},
+address = {New York, NY, USA},
+volume = {43},
+number = {6},
+issn = {0730-0301},
+url = {https://doi.org/10.1145/3687960},
+doi = {10.1145/3687960},
+journal = {ACM Trans. Graph.},
+month = nov,
+articleno = {223},
+numpages = {11},
+}
+
+@article{Erleben2018,
+author = {Erleben, Kenny},
+title = {Methodology for Assessing Mesh-Based Contact Point Methods},
+year = {2018},
+issue_date = {June 2018},
+publisher = {Association for Computing Machinery},
+address = {New York, NY, USA},
+volume = {37},
+number = {3},
+issn = {0730-0301},
+url = {https://doi.org/10.1145/3096239},
+doi = {10.1145/3096239},
+journal = {ACM Trans. Graph.},
+month = jul,
+articleno = {39},
+numpages = {30},
+keywords = {Contact point generation, computational contact mechanics, contact normals, contact regions}
+}
+
+@manual{Mathematica,
+  title        = {{Mathematica, Version 14.0}},
+  author       = {{Wolfram Research, Inc.}},
+  organization = {Wolfram Research, Inc.},
+  address      = {Champaign, Illinois},
+  year         = {2024},
+  note         = {\url{https://www.wolfram.com/mathematica/}}
+}
+
+@manual{GMP,
+  title        = {{GNU MP}: The {GNU} Multiple Precision Arithmetic Library},
+  author       = {Torbj\"orn Granlund and the GMP development team},
+  year         = 2012,
+  note         = {Version 5.0.5},
+  url          = {https://gmplib.org/}
+}
