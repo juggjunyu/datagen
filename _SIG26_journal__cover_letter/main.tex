@@ -24,7 +24,7 @@
 \section*{1\quad Committee Required Condition: Trimming Curves}
 %% ============================================================
 
-We have added a dedicated paragraph in Section~7 (Conclusions) discussing how our framework extends to trimmed and multi-patch CAD models (Committee, R2):
+We have added a dedicated discussion in Section~7 (Conclusions) on how our framework extends to trimmed and multi-patch CAD models (Committee, R2):
 \begin{itemize}[nosep]
     \item Standard NURBS surfaces can be losslessly converted into tensor-product B\'{e}zier patches, which our method natively supports.
     \item Simple trims (domain clipping) are handled by restricting the parameter query range.
@@ -36,11 +36,16 @@ We have added a dedicated paragraph in Section~7 (Conclusions) discussing how ou
 \section*{2\quad Content and Structure}
 %% ============================================================
 
-\paragraph{Expanded floating-point representability (Section~5.4).}
-(R1, R4) We merged former Appendix~F into the main text, transforming a brief paragraph into a full subsection. It now covers: a formal definition of dyadic rationals ($p/2^k$, $|p|<2^{53}$); the core challenge of preserving this property through constraint solving; our Cramer's-rule enumeration strategy; and detailed descriptions of how control points, UV coordinates, contact normals, and local patch extraction each maintain exact representability. A verification paragraph reports a 0\% discard rate in the round-trip test.
+\paragraph{Floating-point representability (Section~5.4).}
+(R1, R4) We substantially restructured and expanded Section~5.4, which previously contained only a brief paragraph. It now provides:
+\begin{itemize}[nosep]
+    \item A formal definition of dyadic rationals ($p/2^k$, $|p|<2^{53}$) and why they matter for exact floating-point representation.
+    \item An explanation of the core challenge: Gaussian elimination can destroy the dyadic property during constraint solving.
+    \item Our three-part resolution strategy: (1)~selecting dyadic input values for control points, UV coordinates, contact normals, and local patch extraction parameters (summarized as four concise items, with full details in Appendix~E); (2)~solving via Cramer's rule enumeration rather than Gaussian elimination; and (3)~a round-trip verification safeguard with a reported 0\% discard rate.
+\end{itemize}
 
-\paragraph{Assumptions and Guarantees box.}
-(R2) We added a prominently framed box in Section~4.4 stating three assumptions (linear control-point motion, convex-hull containment via the variation-diminishing property, IEEE~754 double precision), the guarantee (TDIBM-E eliminates all false negatives), and explicit scope limitations (manifold contacts, self-intersecting surfaces, and trimmed parameter domains are not covered).
+\paragraph{Assumptions and Guarantees.}
+(R2) We added explicit ``Assumptions'' and ``Guarantees'' paragraphs in Section~4.4, stating the assumptions inherited from TDIBM (linear control-point motion, convex-hull containment), and the guarantee that TDIBM-E eliminates all false negatives under these assumptions.
 
 \paragraph{Terminology unification.}
 (R1) We replaced all inconsistent uses of ``floating-point reliability,'' ``floating-point-resilient,'' and ``error-resilient'' with a uniform \textbf{``floating-point robustness''} (noun) and \textbf{``robust''} (adjective) across the Abstract, Introduction, and Evaluation.
@@ -53,13 +58,13 @@ We have added a dedicated paragraph in Section~7 (Conclusions) discussing how ou
 %% ============================================================
 
 \paragraph{Result visualization (new Fig.~8).}
-(R1) We added a two-panel bar chart: (a)~false negative rates across six collision scenarios for four methods, and (b)~average runtime on a log scale for six method variants. These make the key finding---TDIBM-E eliminates all false negatives with moderate overhead---immediately visible.
+(R1) We added a two-panel bar chart visualizing the data from Table~1: (a)~false negative rates across six collision scenarios for four methods, and (b)~average runtime on a log scale for six method variants. These make the key finding---TDIBM-E eliminates all false negatives with moderate overhead---immediately visible.
 
 \paragraph{TDIBM-H multi-tolerance comparison.}
 (R4) The updated results table now includes three pull-apart factors ($10^{-16}$, $10^{-12}$, $10^{-8}$), demonstrating the trade-off between safety and efficiency and showing that no single heuristic value is universally optimal.
 
 \paragraph{Curvature distribution figure (Fig.~7).}
-(R4) Regenerated with enlarged statistics text (repositioned to top-right) and unified styling using the Linux Libertine font to match the paper body.
+(R4) Regenerated with enlarged statistics text, repositioned to top-right, and unified styling. The caption now defines RMS curvature and clarifies axis labels.
 
 %% ============================================================
 \section*{4\quad Line-by-Line Clarifications}
@@ -67,10 +72,10 @@ We have added a dedicated paragraph in Section~7 (Conclusions) discussing how ou
 
 \noindent The following specific points raised by R4 have been addressed:
 \begin{itemize}[nosep]
-    \item \textbf{``Parametric surfaces'' scope} (Line~66): Introduction now states we focus on tensor-product and triangular B\'{e}zier patches.
+    \item \textbf{``Parametric surfaces'' scope} (Line~66): Introduction now states we focus on tensor-product B\'{e}zier patches.
     \item \textbf{``Infinitely many solutions''} (Line~166): Revised to ``may admit infinitely many solutions due to non-isolated contacts.''
-    \item \textbf{Convex hull property} (Line~186): Formally stated in the Assumptions/Guarantees box with reference to the variation-diminishing property.
-    \item \textbf{Convergence criterion} (Line~211): Added parenthetical: ``i.e., all parametric intervals refined below a user-specified threshold (e.g., $10^{-4}$).''
+    \item \textbf{Convex hull property} (Line~186): Formally stated in the Assumptions paragraph with reference to the convex-hull property of B\'{e}zier surfaces.
+    \item \textbf{Convergence criterion} (Line~211): Added parenthetical explanation with example threshold.
     \item \textbf{``Assigning compatible values''} (Line~576): Added forward reference to Section~5.4, which now contains the full explanation.
 \end{itemize}
 
@@ -79,8 +84,11 @@ We have added a dedicated paragraph in Section~7 (Conclusions) discussing how ou
 %% ============================================================
 
 \begin{itemize}[nosep]
+    \item \textbf{Table multiplication signs} (R4): All occurrences of \texttt{*} in tables have been replaced with proper $\times$ symbols.
     \item \textbf{Pipeline figure} (R2): The generation pipeline operates entirely in exact rational arithmetic; the only floating-point involvement is the final round-trip verification described in Section~5.4. We believe the current figure together with the expanded text sufficiently conveys this distinction.
+    \item \textbf{Typo fix}: Corrected ``eliminating all all FNs'' to ``eliminating all FNs'' in Section~6.
     \item \textbf{Font embedding} (R4): We are verifying that all fonts are embedded as subsets in the final PDF.
+    \item \textbf{Figure text colors} (R4): Improvements to the text colors in Figures~3, 4, 5, and 7 are in progress.
 \end{itemize}
 
 %% ============================================================
@@ -90,7 +98,8 @@ We have added a dedicated paragraph in Section~7 (Conclusions) discussing how ou
 \noindent The following items are in progress and will be completed for the final version:
 \begin{itemize}[nosep]
     \item Merging Appendix~A (Step~I error accumulation) and Appendix~B (robust implementation) into the main text (R3, R4).
-    \item Worst-case runtime percentile analysis with box plots (R2).
+    \item Worst-case runtime percentile analysis (R2).
+    \item Figure text color improvements (R4).
 \end{itemize}
 
 %% ============================================================
@@ -105,14 +114,15 @@ We have added a dedicated paragraph in Section~7 (Conclusions) discussing how ou
 \textbf{Change} & \textbf{Source} & \textbf{Location} \\
 \midrule
 Trimming curves discussion          & Committee, R2 & Section 7 \\
-Section 5.4 expansion (Appendix F)  & R1, R4        & Section 5.4 \\
-Assumptions / Guarantees box        & R2            & Section 4.4 \\
+Section 5.4 restructured            & R1, R4        & Section 5.4, App.~E \\
+Assumptions / Guarantees            & R2            & Section 4.4 \\
 Terminology unification             & R1            & Abstract, Sec.~1, 6 \\
 Non-point contacts discussion       & R1            & Section 7 \\
 Result visualization (Fig.~8)       & R1            & Section 6 / Figures \\
 Multi-tolerance TDIBM-H table       & R4            & Section 6 \\
 Curvature figure restyled (Fig.~7)  & R4            & Figure 7 \\
 Line-by-line clarifications         & R4            & Sections 1--5 \\
+Table $\times$ symbol fix           & R4            & Tables \\
 Pipeline diagram rationale          & R2            & This letter \\
 \bottomrule
 \end{tabular}

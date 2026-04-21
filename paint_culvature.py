@@ -135,7 +135,7 @@ def plot_curvature_distribution(curvatures, output_path=None, trim_percent=1.0):
 
     # 设置标签
     ax.set_xlabel('RMS Curvature')
-    ax.set_ylabel('Count')
+    ax.set_ylabel('Number of Collision Pairs')
 
     # 添加统计信息文本框 — 放大字体
     stats_text = (f'Total: {original_count}\n'
