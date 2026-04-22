@@ -1,253 +1,262 @@
-# Runtime Percentile 分析 — 完整执行方案
+# 实验方案：完整重跑 + Runtime Percentile 分析
 
-## 1. 背景与需求
+## 1. 背景
 
-### Reviewer 原始关切 (R2)
-R2 认为论文只报了 average runtime，无法判断方法在极端情况下是否会特别慢。需要展示 runtime 的分布特征，特别是尾部行为（worst-case）。
+### 为什么要重跑
+- 当前 `result/` 文件夹的数据（td, td_with_trick, trad_10）和论文表格 **不是同一版数据集**
+  - result: FF=11972, EF=2000, EE=1818, VF=2118, VE=2200, VV=2314
+  - 论文表: FF=6603, EF=1120, EE=1100, VF=1100, VE=1100, VV=1100（仅 RP+RN 部分）
+- trad 只跑了 20 个样本，无法用于论文
+- result 里缺少 TDIBM-E、TDIBM-H(10⁻¹⁶)、TDIBM-H(10⁻⁸) 的结果
+- 需要保证 **正文表、附录表、Fig.8 柱状图、runtime 分布图** 四者使用完全相同的一次实验结果
 
-### Rebuttal 承诺原文
-> "We conducted preliminary profiling on FF scenarios, finding that the worst-case runtime for our TDIBM-E is 48s, compared to 40s for the TDIBM-H (10⁻¹²). This demonstrates that even in severely degenerate configurations, our method maintains a reasonable overhead while preserving safety. **We will add figures and detailed analysis for comprehensive runtime percentiles and worst-case behaviors.**"
-
-### 需要兑现的内容
-1. 一张或多张展示 runtime 分布/percentile 的图
-2. 在正文或 Appendix 中加一段 worst-case 分析文字
-
----
-
-## 2. 现有资源
-
-### 已有的 3 张 runtime distribution 图（旧版，已在 Overleaf）
-位置：`Figures/timeTDIBM.pdf`, `Figures/timeTDIBM-H.pdf`, `Figures/timeTDIBM-E.pdf`
-
-图的内容：
-- X 轴：computation time (ms)，对数坐标
-- Y 轴：count（频次）
-- 按 6 种碰撞场景（FF/EF/EE/VF/VE/VV）分颜色堆叠
-- 三张图分别对应 TDIBM、TDIBM-H(10⁻¹²)、TDIBM-E
-
-这三张图在 `Sections/Figures.tex` L57-71 中被注释掉了，原始代码：
-```latex
-% \begin{figure}[htbp]
-%     \centering
-%     \begin{subfigure}{\linewidth}
-%         \includegraphics[width=0.8\linewidth, trim=19 22 13 22, clip]{Figures/timeTDIBM.pdf}
-%         \caption{}
-%         \label{fig:time-tdibm}
-%     \end{subfigure}
-%     \begin{subfigure}{\linewidth}
-%         \includegraphics[width=0.8\linewidth, trim=19 22 13 22, clip]{Figures/timeTDIBM-H.pdf}
-%         \caption{}
-%         \label{fig:time-tdibm-h}
-%     \end{subfigure}
-%     \begin{subfigure}{\linewidth}
-%         \includegraphics[width=0.8\linewidth, trim=19 22 13 22, clip]{Figures/timeTDIBM-E.pdf}
-%         \caption{}
-%         \label{fig:time-tdibm-e}
-%     \end{subfigure}
-%     \caption{Distribution of computation time. The x-axis is in log scale and the y-axis shows the number.}
-%     \label{fig:time-distrubution}
-% \end{figure}
-```
-
-### 问题
-1. **风格不统一**：旧图不是 Linux Libertine 字体，和 Fig.7/Fig.8 风格不一致
-2. **没有生成脚本**：当前电脑上没有找到生成这三张图的 Python 脚本
-3. **没有原始逐 case runtime 数据**：没有 csv/txt 格式的每个 test case 单独运行时间
-
-### 已有的 average runtime 数据（来自论文表格）
-来源：`Sections/Appendices.tex` L249-261 的表格
-
-```
-场景         | Trad        | TDIBM   | H(10⁻¹⁶) | H(10⁻¹²) | H(10⁻⁸)  | TDIBM-E
--------------|-------------|---------|-----------|-----------|-----------|--------
-FF (RP+RN)   | 2.23×10⁵   | 338.09  | 390.50    | 377.61    | 624.43    | 382.02
-EF (RP+RN)   | 293.11      | 56.06   | 59.16     | 57.52     | 80.02     | 57.26
-EE (RP+RN)   | 9887.50     | 12.70   | 12.39     | 13.10     | 31.59     | 13.27
-VF (RP+RN)   | 13.91       | 12.48   | 13.17     | 12.95     | 36.35     | 15.37
-VE (RP+RN)   | 732.19      | 27.28   | 30.12     | 32.55     | 72.93     | 36.57
-VV (RP+RN)   | 2.94        | 2.68    | 3.12      | 4.02      | 9.50      | 4.69
-FF (NHP+NMN) | 8303.91     | 121.52  | 125.14    | 136.12    | 279.07    | 140.27
-EF (NHP+NMN) | 426.15      | 92.37   | 93.76     | 99.38     | 143.36    | 112.65
-EE (NHP+NMN) | 23.52       | 58.20   | 57.37     | 60.80     | 87.03     | 68.31
-VF (NHP+NMN) | 451.47      | 28.27   | 32.69     | 30.88     | 42.47     | 29.78
-VE (NHP+NMN) | 16.02       | 11.85   | 12.23     | 11.94     | 19.07     | 12.14
-VV (NHP+NMN) | 0.71        | 1.26    | 1.37      | 1.52      | 1.85      | 1.29
-```
-
-### Rebuttal 中提到的 worst-case 数据点
-- FF worst-case: TDIBM-E = 48s, TDIBM-H(10⁻¹²) = 40s
+### Reviewer 需求 (R2)
+Rebuttal 承诺："We will add figures and detailed analysis for comprehensive runtime percentiles and worst-case behaviors."
 
 ---
 
-## 3. 执行方案
+## 2. 完整数据集规模
 
-### 方案 A：用现有三张图 + 文字补充（快速兑现，无需额外数据）
+根据附录 Table (tab:generation_statistics)，完整数据集包含 4 类样本：
 
-#### 步骤 A1：取消注释，放入 Appendix
-在 `Sections/Appendices.tex` 的 "Detailed Statistics" 部分（`\subsection{Breakdown of Detailed Results.}` 之后）加入：
+| 场景 | RP (GT=1) | RN (GT=0) | NHP (GT=1) | NMN (GT=0) | Total |
+|------|-----------|-----------|------------|------------|-------|
+| FF   | 6003      | 6003      | 600        | 600        | 13206 |
+| EF   | 1020      | 1020      | 100        | 100        | 2240  |
+| EE   | 1000      | 1000      | 100        | 100        | 2200  |
+| VF   | 1000      | 1000      | 100        | 100        | 2200  |
+| VE   | 1000      | 1000      | 100        | 100        | 2200  |
+| VV   | 1000      | 1000      | 100        | 100        | 2200  |
+| **合计** | **11023** | **11023** | **1100** | **1100** | **24246** |
 
-```latex
-\journal{
-\subsection{Runtime Distribution Analysis}
-\label{app:runtime_distribution}
-To provide insight into the worst-case behavior of different methods, we plot the runtime distributions of the three TDIBM variants across the entire RP+RN dataset in Fig.~\ref{fig:time-distribution}. The distributions of TDIBM, TDIBM-H ($10^{-12}$), and TDIBM-E are highly similar in shape, confirming that the error-bound computation in TDIBM-E does not introduce pathological slowdowns. In the most compute-intensive FF scenario, the worst-case runtime of TDIBM-E is approximately 48s, compared to 40s for TDIBM-H ($10^{-12}$)---a moderate 20\% overhead consistent with the average-case behavior reported in Table~\ref{tab:results_updated}.
+- **RP**: Regular Positive，真实碰撞
+- **RN**: Regular Negative，缩短时间区间后无碰撞（与 RP 一一对应）
+- **NHP**: Near-Hit Positive，擦边碰撞
+- **NMN**: Near-Miss Negative，擦边不碰
 
-\begin{figure}[htbp]
-    \centering
-    \begin{subfigure}{\linewidth}
-        \includegraphics[width=0.85\linewidth, trim=19 22 13 22, clip]{Figures/timeTDIBM.pdf}
-        \caption{TDIBM}
-        \label{fig:time-tdibm}
-    \end{subfigure}
-    \begin{subfigure}{\linewidth}
-        \includegraphics[width=0.85\linewidth, trim=19 22 13 22, clip]{Figures/timeTDIBM-H.pdf}
-        \caption{TDIBM-H ($10^{-12}$)}
-        \label{fig:time-tdibm-h}
-    \end{subfigure}
-    \begin{subfigure}{\linewidth}
-        \includegraphics[width=0.85\linewidth, trim=19 22 13 22, clip]{Figures/timeTDIBM-E.pdf}
-        \caption{TDIBM-E (ours)}
-        \label{fig:time-tdibm-e}
-    \end{subfigure}
-    \caption{Runtime distributions of three TDIBM variants on the RP+RN dataset. The x-axis shows computation time in milliseconds (log scale) and the y-axis shows the count. The three methods exhibit highly similar distributions, indicating that TDIBM-E's error-bound computation does not cause disproportionate slowdowns even in worst-case scenarios.}
-    \label{fig:time-distribution}
-\end{figure}
-}
+### 论文中两张表的分法
+
+**正文表 (tab:results_updated)**：合并 RP+RN+NHP+NMN，例如：
+- FF total = 6003(RP) + 600(NHP) = 6603 (碰撞类，分母用于 FN)
+- FF total = 6003(RN) + 600(NMN) = 6603 (非碰撞类，分母用于 FP)
+- 注意：FF 正文表的分母是 6603 而非 13206，因为 FN 只对碰撞类有意义，FP 只对非碰撞类有意义
+
+**附录表 (tab:results)**：RP+RN 和 NHP+NMN 分开两半报告
+
+---
+
+## 3. 数据集文件结构
+
+数据集在另一台电脑 `D:\projects\CCDdataset\ours\` 下：
+
+```
+ours/
+├── face-face/
+│   ├── dataset_typeFaceFace.csv        # RP, 每 24 行 = 1 个 query
+│   ├── fp_dataset_typeFaceFace.csv     # RN
+│   ├── nearhit_typeFaceFace.csv        # NHP (文件名待确认)
+│   └── nearmiss_typeFaceFace.csv       # NMN (文件名待确认)
+├── edge-face/   (同结构)
+├── edge-edge/   (同结构)
+├── vert-face/   (同结构)
+├── vert-edge/   (同结构)
+└── vert-vert/   (同结构)
 ```
 
-#### 步骤 A2：在 Results.tex 正文加引用
-在 Results.tex 的 runtime 讨论段落（约 L63，"The runtime overhead remained moderate" 附近）加一句：
+> ⚠️ NHP/NMN 文件名待确认。到了另一台电脑先 `ls` 看实际文件名。
 
-```latex
-\journal{We further analyze the runtime distributions in Appendix~\ref{app:runtime_distribution}, which confirm that the three TDIBM variants exhibit nearly identical distribution shapes, with no pathological worst-case slowdowns for TDIBM-E.}
-```
+### 验证数据集版本
 
-#### 步骤 A3：删除 Figures.tex 中的旧注释
-`Sections/Figures.tex` L57-71 的注释代码可以删除（已移到 Appendix）。
-
-#### 步骤 A4：推送到 Overleaf
 ```bash
-cd overleaf-dir
-git add Sections/Appendices.tex Sections/Results.tex Sections/Figures.tex
-git commit -m "Add runtime distribution analysis in Appendix (R2 worst-case)"
-git push
+# 每 24 行 = 1 个 query，数数是否和上面的表一致
+for f in ours/*/dataset_*.csv; do echo "$f: $(($(wc -l < "$f") / 24)) queries"; done
+for f in ours/*/fp_dataset_*.csv; do echo "$f: $(($(wc -l < "$f") / 24)) queries"; done
 ```
 
-#### 步骤 A5：更新 cover letter
-将 "Remaining Items" 中的 runtime percentile 条目移到已完成。将 cover letter 中 R2 回应的 worst-case 段落更新为：
-```
-We have added runtime distribution plots (Fig. X in Appendix) showing that all three TDIBM variants exhibit nearly identical runtime distributions. The worst-case overhead of TDIBM-E over TDIBM-H is approximately 20% on FF scenarios (48s vs 40s).
-```
+期望结果：
+- face-face/dataset: 6003 queries (RP)
+- face-face/fp_dataset: 6003 queries (RN)
+- 其他场景: 1000-1020 queries
 
 ---
 
-### 方案 B：重新生成统一风格的图（更好，需要原始数据）
+## 4. 需要跑的方法及配置
 
-#### 前提：获取逐 case runtime 数据
-需要的数据格式（任选一种）：
+共 **6 个方法**（对应正文 Table 的 6 列）：
 
-**格式 1：单个 CSV 文件**
-```csv
-scenario,category,method,runtime_ms
-FF,RP,TDIBM,123.45
-FF,RP,TDIBM,234.56
-FF,RP,TDIBM-H,120.33
-FF,RP,TDIBM-E,125.67
+| 编号 | 方法 | 配置说明 |
+|------|------|----------|
+| 1 | Trad. | 传统 inclusion-based CCD，**全量跑**（之前只跑了 20 个，远远不够） |
+| 2 | TDIBM | 基础版 TDIBM，无 envelope pulling |
+| 3 | TDIBM-H (10⁻¹⁶) | heuristic pull-apart, factor = 1e-16 |
+| 4 | TDIBM-H (10⁻¹²) | heuristic pull-apart, factor = 1e-12 |
+| 5 | TDIBM-H (10⁻⁸) | heuristic pull-apart, factor = 1e-8 |
+| 6 | TDIBM-E | error-bound 方法 (ours) |
+
+每个方法跑 **全部 6 个场景 × 4 类样本**：
+
+| 场景 | RP 条数 | RN 条数 | NHP 条数 | NMN 条数 | 每方法总 queries |
+|------|---------|---------|----------|----------|-----------------|
+| FF   | 6003    | 6003    | 600      | 600      | 13206           |
+| EF   | 1020    | 1020    | 100      | 100      | 2240            |
+| EE   | 1000    | 1000    | 100      | 100      | 2200            |
+| VF   | 1000    | 1000    | 100      | 100      | 2200            |
+| VE   | 1000    | 1000    | 100      | 100      | 2200            |
+| VV   | 1000    | 1000    | 100      | 100      | 2200            |
+| **合计** | | | | | **24246** |
+
+6 个方法 × 24246 queries = **145,476 次 CCD 测试**
+
+### ⚠️ Trad. 方法特别注意
+
+- Trad. 在 FF 上特别慢（平均 151 秒/query），6003 RP + 6003 RN = 12006 queries 约需 **20+ 天**
+- 之前论文只跑了 20 个样本有理由的
+- 建议：
+  - 如果附录表的 Trad. FF 条目可以保持 20 样本（`13/20`, `0/20`），就不重跑 FF Trad.
+  - 或者设超时限制（如 600s/query），超时算 timeout 跳过
+  - NHP+NMN 的 Trad. FF 也是超时问题（附录表用 `---` 标注）
+- **其他场景的 Trad. 速度还行**，正常跑
+
+---
+
+## 5. 输出目录结构
+
+```
+result_final/
+├── trad/
+│   ├── total.txt           # FN/FP 汇总 + total cases + total time
+│   ├── timelog.txt          # 逐 case: "case_index runtime_seconds"
+│   └── log.txt             # FP/FN 发生的 case 编号
+├── tdibm/
+├── tdibm_h_16/
+├── tdibm_h_12/
+├── tdibm_h_8/
+└── tdibm_e/
+    ├── total.txt
+    ├── timelog.txt
+    └── log.txt
+```
+
+### timelog.txt 格式（已有格式，保持不变）
+
+```
+case_index runtime_seconds
+0 0.0284784000000000
+1 0.0878558000000000
 ...
 ```
 
-**格式 2：按方法分文件**
-每个文件名如 `runtime_TDIBM.txt`、`runtime_TDIBM-H.txt`、`runtime_TDIBM-E.txt`，内容每行：
+case 的排列顺序：`FF_RP → FF_RN → EF_RP → EF_RN → ... → VV_RP → VV_RN → FF_NHP → FF_NMN → ... → VV_NHP → VV_NMN`
+
+> ⚠️ 排列顺序待确认。用 timelog 行数和 total cases 各场景之和交叉验证。
+
+### total.txt 格式（已有格式，保持不变）
+
 ```
-scenario runtime_ms
-FF 123.45
-FF 234.56
-EF 56.78
+FN FF:0
+FP FF:175
+FN EF:0
+FP EF:7
+...
+total cases FF:6603
+total cases EF:1120
+...
+total time FF:327.73
+total time EF:57.76
 ...
 ```
 
-**格式 3：按方法+场景分文件**
-如 `FF_TDIBM.txt`，每行一个 runtime 值：
-```
-123.45
-234.56
-345.67
-...
-```
+> ⚠️ 确认 total.txt 是只报 RP+RN 还是全部 4 类。附录表需要 RP+RN 和 NHP+NMN 分开，所以最好分开报或在 log.txt 里能区分。
 
-#### 步骤 B1：写 Python 脚本
-在 `scripts/plot_runtime_distribution.py` 中编写，使用与 `plot_results.py` 相同的风格设置：
+---
 
-```python
-import matplotlib
-matplotlib.use('Agg')
-import matplotlib.pyplot as plt
-import matplotlib.font_manager as fm
-import numpy as np
-import os
+## 6. 执行步骤
 
-# ── Load Linux Libertine font（与 plot_results.py 相同） ──
-_font_dir = r'E:\research\datagen\Libertine Font'
-for _f in os.listdir(_font_dir):
-    if _f.endswith('.otf') and not _f.startswith('._'):
-        fm.fontManager.addfont(os.path.join(_font_dir, _f))
-_libertine_name = 'Linux Libertine O'  # 已知名称
-
-plt.rcParams.update({
-    'font.family': 'serif',
-    'font.serif': [_libertine_name, 'DejaVu Serif'],
-    'font.size': 11,
-    'axes.labelsize': 12,
-    'figure.dpi': 300,
-    'savefig.bbox': 'tight',
-    'savefig.pad_inches': 0.15,
-})
-```
-
-绘图选项（选其一或组合）：
-
-**选项 B1a：三合一 runtime distribution 直方图（复刻旧图但统一风格）**
-- 三个 subplot 纵向排列
-- 每个 subplot 内按场景分颜色堆叠
-- X 轴 log scale，Y 轴 count
-
-**选项 B1b：Box plot 展示 percentile（R2 最想看的）**
-- X 轴：6 种场景
-- 每个场景 3 个 box（TDIBM / TDIBM-H / TDIBM-E）
-- Box 显示 P25/P50/P75，whisker 显示 P5/P95，outlier 点显示 max
-- Y 轴 log scale
-
-**选项 B1c：CDF 曲线对比**
-- 每个场景一个 subplot（2×3 grid）
-- 每个 subplot 内 3 条 CDF 曲线（TDIBM / TDIBM-H / TDIBM-E）
-- X 轴 runtime (ms) log scale，Y 轴 cumulative probability
-
-#### 步骤 B2：生成图并复制到 Overleaf
+### Step 1：确认数据集
 ```bash
-python scripts/plot_runtime_distribution.py
-cp scripts/runtime_distribution.pdf Overleaf/Figures/
+# 确认文件存在和 query 数量
+for dir in face-face edge-face edge-edge vert-face vert-edge vert-vert; do
+    echo "=== $dir ==="
+    for f in ours/$dir/*.csv; do
+        lines=$(wc -l < "$f")
+        echo "  $(basename $f): $lines lines = $((lines/24)) queries"
+    done
+done
 ```
 
-#### 步骤 B3-B5：同方案 A 的步骤 A1-A5，但引用新图
+### Step 2：跑 6 个方法
+
+具体命令取决于 CCD 测试程序的接口，根据实际情况填入。
+
+每个方法跑完后立刻检查 `total.txt`：
+```bash
+# 快速检查 FN/FP
+cat result_final/tdibm/total.txt
+cat result_final/tdibm_e/total.txt
+```
+
+### Step 3：核对 FN/FP
+
+FN/FP 是确定性的。核对表（RP+RN 部分，正文表分母）：
+
+| 场景 | 指标 | Trad. | TDIBM | H(16) | H(12) | H(8) | TDIBM-E |
+|------|------|-------|-------|-------|-------|------|---------|
+| FF | FP | 13/40* | 175/6603 | 175/6603 | 175/6603 | 178/6603 | 175/6603 |
+| FF | FN | 0/20* | 0/6603 | 0/6603 | 0/6603 | 0/6603 | 0/6603 |
+| EF | FP | 9/1120 | 7/1120 | 7/1120 | 7/1120 | 7/1120 | 7/1120 |
+| EF | FN | 0/1120 | 0/1120 | 0/1120 | 0/1120 | 0/1120 | 0/1120 |
+| EE | FP | 96/110 | 121/1100 | 121/1100 | 121/1100 | 121/1100 | 121/1100 |
+| EE | FN | 0/110 | 135/1100 | 20/1100 | 0/1100 | 0/1100 | 0/1100 |
+| VF | FP | 1/1100 | 0/1100 | 0/1100 | 0/1100 | 0/1100 | 0/1100 |
+| VF | FN | 12/1100 | 212/1100 | 22/1100 | 0/1100 | 0/1100 | 0/1100 |
+| VE | FP | 458/1100 | 310/1100 | 310/1100 | 312/1100 | 312/1100 | 310/1100 |
+| VE | FN | 73/1100 | 452/1100 | 196/1100 | 0/1100 | 0/1100 | 0/1100 |
+| VV | FP | 132/1100 | 56/1100 | 56/1100 | 56/1100 | 58/1100 | 56/1100 |
+| VV | FN | 0/1100 | 860/1100 | 658/1100 | 0/1100 | 0/1100 | 0/1100 |
+
+> *Trad. 的 FF 分母不同是因为只跑了部分样本
+
+**如果 FN/FP 不一致，说明数据集版本不对，停下来排查。**
+
+### Step 4：拷贝结果
+将 `result_final/` 拷到 `E:\research\datagen\result_final\`。
+
+### Step 5：画图 & 更新论文
+
+在这台电脑上：
+
+1. **更新 Fig.8**：修改 `scripts/plot_results.py` 中的 runtime 数据，重新生成 `results_combined.pdf`
+2. **画 runtime 分布图**：新建 `scripts/plot_runtime_distribution.py`
+3. **更新论文表格**：runtime 平均值可能略有波动，用新数据统一更新
+4. **Appendix 加 runtime 分布图 + 文字**
+5. **Results.tex 加引用**
+6. **更新 cover letter**
 
 ---
 
-## 4. 推荐
+## 7. Runtime 分布图方案选择
 
-- **当前无原始数据** → 先用方案 A 快速兑现承诺
-- **后续拿到数据** → 用方案 B 替换为统一风格的图（优先 B1b box plot，最直观展示 percentile）
-- 两个方案的 LaTeX 代码和正文文字完全兼容，只需替换图片文件
+| 方案 | 图类型 | 优点 | 推荐 |
+|------|--------|------|------|
+| A: Box plot | X轴=场景, 每场景3-6个box, Y轴log | 直观展示 P25/P50/P75/P95/max | ✅ **首选** |
+| B: 直方图 | 3 subplot 纵排 | 展示完整分布形状 | 作为补充 |
+| C: CDF 曲线 | 2×3 grid，每格多条线 | 精确读取任意 percentile | 信息密度高 |
+
+推荐 A 放 Appendix，最直接回应 R2 "worst-case percentile" 关切。
 
 ---
 
-## 5. 相关文件位置
+## 8. Checklist
 
-| 文件 | 路径 | 作用 |
-|------|------|------|
-| 旧版 runtime 图 | `Overleaf/Figures/timeTDIBM{,-H,-E}.pdf` | 现有 3 张旧风格图 |
-| 图引用（已注释） | `Overleaf/Sections/Figures.tex` L57-71 | 取消注释或移到 Appendix |
-| Appendix | `Overleaf/Sections/Appendices.tex` | 方案 A 的图和文字放这里 |
-| Results 正文 | `Overleaf/Sections/Results.tex` ~L63 | 加引用句 |
-| 新图脚本模板 | `E:\research\datagen\scripts\plot_results.py` | 方案 B 参考风格 |
-| Cover letter | `E:\research\datagen\_SIG26_journal__cover_letter\main.tex` | 更新 Remaining Items |
-| Revision TODO | `E:\research\datagen\docs\revision_todo.md` | 标记完成 |
+- [ ] 确认数据集文件齐全，query 数量与论文一致
+- [ ] 确认 NHP/NMN 文件名
+- [ ] 确认 timelog.txt 中 case 的排列顺序（哪个场景先，RP/RN 怎么交替）
+- [ ] 跑 6 个方法（Trad 注意 FF 超时问题）
+- [ ] 核对 FN/FP 与上表一致
+- [ ] 拷贝 result_final/ 到本机
+- [ ] 更新 `plot_results.py` 数据，重新生成 Fig.8
+- [ ] 编写 `plot_runtime_distribution.py`，生成 runtime 分布图
+- [ ] 更新论文正文表 runtime 数据（如有变化）
+- [ ] Appendix 加入 runtime 分布 subsection
+- [ ] Results.tex 加引用
+- [ ] 更新 cover letter "Remaining Items"
