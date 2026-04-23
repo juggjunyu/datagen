@@ -60,6 +60,9 @@ We have added a dedicated discussion in Section~7 (Conclusions) on how our frame
 \paragraph{Result visualization (new Fig.~8).}
 (R1) We added a two-panel bar chart visualizing the data from Table~1: (a)~false negative rates across six collision scenarios for four methods, and (b)~average runtime on a log scale for six method variants. These make the key finding---TDIBM-E eliminates all false negatives with moderate overhead---immediately visible.
 
+\paragraph{Runtime distribution analysis (new Fig.~9).}
+(R2) We added a runtime distribution figure showing per-query runtime histograms of TDIBM-H ($10^{-12}$) and TDIBM-E across all six collision scenarios. Each subplot includes a log-scale inset to reveal tail behavior. The two methods exhibit nearly identical distributions, confirming that TDIBM-E does not introduce pathological worst-case slowdowns.
+
 \paragraph{TDIBM-H multi-tolerance comparison.}
 (R4) The updated results table now includes three pull-apart factors ($10^{-16}$, $10^{-12}$, $10^{-8}$), demonstrating the trade-off between safety and efficiency and showing that no single heuristic value is universally optimal.
 
@@ -98,7 +101,6 @@ We have added a dedicated discussion in Section~7 (Conclusions) on how our frame
 \noindent The following items are in progress and will be completed for the final version:
 \begin{itemize}[nosep]
     \item Merging Appendix~A (Step~I error accumulation) and Appendix~B (robust implementation) into the main text (R3, R4).
-    \item Worst-case runtime percentile analysis (R2).
     \item Figure text color improvements (R4).
 \end{itemize}
 
@@ -119,6 +121,7 @@ Assumptions / Guarantees            & R2            & Section 4.4 \\
 Terminology unification             & R1            & Abstract, Sec.~1, 6 \\
 Non-point contacts discussion       & R1            & Section 7 \\
 Result visualization (Fig.~8)       & R1            & Section 6 / Figures \\
+Runtime distribution (Fig.~9)       & R2            & Figures \\
 Multi-tolerance TDIBM-H table       & R4            & Section 6 \\
 Curvature figure restyled (Fig.~7)  & R4            & Figure 7 \\
 Line-by-line clarifications         & R4            & Sections 1--5 \\
