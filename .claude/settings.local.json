@@ -6,7 +6,8 @@
       "Bash(where claude:*)",
       "Read(//c/Users/juggjywang/**)",
       "mcp__overleaf__list_files",
-      "Bash(python:*)"
+      "Bash(python:*)",
+      "mcp__overleaf__read_file"
     ]
   }
 }

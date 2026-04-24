@@ -10,7 +10,7 @@
 
 \begin{center}
     {\Large \textbf{Revision Letter}} \\[1.5em]
-    \textbf{Original Submission ID:} papers\_1556 \\[0.5em]
+    \textbf{Original Submission ID:} papers\_390 \\[0.5em]
     \textbf{Title:} Floating-Point Robustness in Parametric Surface Continuous Collision Detection:\\ From Algorithm to Benchmarking
 \end{center}
 
@@ -44,6 +44,9 @@ We have added a dedicated discussion in Section~7 (Conclusions) on how our frame
     \item Our three-part resolution strategy: (1)~selecting dyadic input values for control points, UV coordinates, contact normals, and local patch extraction parameters (summarized as four concise items, with full details in Appendix~E); (2)~solving via Cramer's rule enumeration rather than Gaussian elimination; and (3)~a round-trip verification safeguard with a reported 0\% discard rate.
 \end{itemize}
 
+\paragraph{Appendix~E: Local patch extraction.}
+(R1, R4) We revised the local patch extraction subsection in Appendix~E to explain how sub-triangle vertices are snapped to dyadic coordinates while guaranteeing containment of the collision point, and how the blossom evaluation preserves the dyadic property.
+
 \paragraph{Assumptions and Guarantees.}
 (R2) We added explicit ``Assumptions'' and ``Guarantees'' paragraphs in Section~4.4, stating the assumptions inherited from TDIBM (linear control-point motion, convex-hull containment), and the guarantee that TDIBM-E eliminates all false negatives under these assumptions.
 
@@ -58,13 +61,10 @@ We have added a dedicated discussion in Section~7 (Conclusions) on how our frame
 %% ============================================================
 
 \paragraph{Result visualization (new Fig.~8).}
-(R1) We added a two-panel bar chart visualizing the data from Table~1: (a)~false negative rates across six collision scenarios for four methods, and (b)~average runtime on a log scale for six method variants. These make the key finding---TDIBM-E eliminates all false negatives with moderate overhead---immediately visible.
+(R1) We added a two-panel bar chart visualizing the data from Table~1: (a)~false negative counts across six collision scenarios for four methods, and (b)~average runtime on a log scale for six method variants. These make the key finding---TDIBM-E eliminates all false negatives with moderate overhead---immediately visible.
 
 \paragraph{Runtime distribution analysis (new Fig.~9).}
 (R2) We added a runtime distribution figure showing per-query runtime histograms of TDIBM-H ($10^{-12}$) and TDIBM-E across all six collision scenarios. Each subplot includes a log-scale inset to reveal tail behavior. The two methods exhibit nearly identical distributions, confirming that TDIBM-E does not introduce pathological worst-case slowdowns.
-
-\paragraph{TDIBM-H multi-tolerance comparison.}
-(R4) The updated results table now includes three pull-apart factors ($10^{-16}$, $10^{-12}$, $10^{-8}$), demonstrating the trade-off between safety and efficiency and showing that no single heuristic value is universally optimal.
 
 \paragraph{Curvature distribution figure (Fig.~7).}
 (R4) Regenerated with enlarged statistics text, repositioned to top-right, and unified styling. The caption now defines RMS curvature and clarifies axis labels.
@@ -88,21 +88,20 @@ We have added a dedicated discussion in Section~7 (Conclusions) on how our frame
 
 \begin{itemize}[nosep]
     \item \textbf{Table multiplication signs} (R4): All occurrences of \texttt{*} in tables have been replaced with proper $\times$ symbols.
-    \item \textbf{Pipeline figure} (R2): The generation pipeline operates entirely in exact rational arithmetic; the only floating-point involvement is the final round-trip verification described in Section~5.4. We believe the current figure together with the expanded text sufficiently conveys this distinction.
+    \item \textbf{Pipeline figure} (R2): The generation pipeline figure has been updated to highlight (with black frames) the two floating-point steps at the start and end of the pipeline; all intermediate computations are performed in
+   rational arithmetic. The caption now clarifies this distinction.
     \item \textbf{Typo fix}: Corrected ``eliminating all all FNs'' to ``eliminating all FNs'' in Section~6.
-    \item \textbf{Font embedding} (R4): We are verifying that all fonts are embedded as subsets in the final PDF.
-    \item \textbf{Figure text colors} (R4): Improvements to the text colors in Figures~3, 4, 5, and 7 are in progress.
 \end{itemize}
 
 %% ============================================================
-\section*{6\quad Remaining Items}
-%% ============================================================
+% \section*{6\quad Remaining Items}
+% %% ============================================================
 
-\noindent The following items are in progress and will be completed for the final version:
-\begin{itemize}[nosep]
-    \item Merging Appendix~A (Step~I error accumulation) and Appendix~B (robust implementation) into the main text (R3, R4).
-    \item Figure text color improvements (R4).
-\end{itemize}
+% \noindent The following items are in progress and will be completed for the final version:
+% \begin{itemize}[nosep]
+%     \item Merging Appendix~A (Step~I error accumulation) and Appendix~B (robust implementation) into the main text (R3, R4).
+%     \item Figure text color improvements (R4).
+% \end{itemize}
 
 %% ============================================================
 \section*{Summary of Changes}
@@ -120,13 +119,13 @@ Section 5.4 restructured            & R1, R4        & Section 5.4, App.~E \\
 Assumptions / Guarantees            & R2            & Section 4.4 \\
 Terminology unification             & R1            & Abstract, Sec.~1, 6 \\
 Non-point contacts discussion       & R1            & Section 7 \\
-Result visualization (Fig.~8)       & R1            & Section 6 / Figures \\
+Result visualization (Fig.~8)       & R1            & Figures \\
 Runtime distribution (Fig.~9)       & R2            & Figures \\
-Multi-tolerance TDIBM-H table       & R4            & Section 6 \\
+Appendix~E local patch extraction   & R1, R4        & Appendix E \\
 Curvature figure restyled (Fig.~7)  & R4            & Figure 7 \\
 Line-by-line clarifications         & R4            & Sections 1--5 \\
 Table $\times$ symbol fix           & R4            & Tables \\
-Pipeline diagram rationale          & R2            & This letter \\
+Pipeline diagram (Fig.~4)           & R2            & Figures  \\
 \bottomrule
 \end{tabular}
 \end{center}
@@ -134,8 +133,5 @@ Pipeline diagram rationale          & R2            & This letter \\
 \vspace{1.5em}
 \noindent We believe these revisions thoroughly address all reviewer concerns and committee conditions. We are grateful for the detailed feedback, which has significantly improved the clarity and completeness of our manuscript.
 
-\vspace{2em}
-\noindent Sincerely,\\
-The Authors
 
 \end{document}
